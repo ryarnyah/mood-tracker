@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+message Entry {
+        uint32 record = 1;
+        string comment = 2;
+}
+
+message AddEntryRequest {
+        Entry entry = 1;
+        string access_code = 2;
+        string ref_access_code = 3;
+}
+
+message AddEntryResponse {}
+
+message ListEntryRequest {
+        string access_code = 1;
+}
+
+message ListEntryResponse {
+        repeated Entry entries = 1;
+}
+
+message CreateMoodRequest {
+        string title = 1;
+        string content = 2;
+        uint32 number_of_records_needed = 3;
+}
+
+message CreateMoodResponse {
+        string access_code = 1;
+        repeated string records_access_codes = 3;
+}
+
+service Mood {
+        rpc AddEntry(AddEntryRequest) returns (AddEntryResponse) {}
+        rpc ListEntries(ListEntryRequest) returns (ListEntryResponse) {}
+        rpc CreateMood(CreateMoodRequest) returns (CreateMoodResponse) {}
+}
