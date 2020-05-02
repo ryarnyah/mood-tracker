@@ -1,3 +1,5 @@
+/* eslint-disable */
+//@ts-nocheck
 // source: mood.proto
 /**
  * @fileoverview
@@ -12,8 +14,6 @@ var jspb = require('google-protobuf');
 var goog = jspb;
 var global = Function('return this')();
 
-var github_com_mwitkow_go$proto$validators_validator_pb = require('./github.com/mwitkow/go-proto-validators/validator_pb.js');
-goog.object.extend(proto, github_com_mwitkow_go$proto$validators_validator_pb);
 goog.exportSymbol('proto.AddEntryRequest', null, global);
 goog.exportSymbol('proto.AddEntryResponse', null, global);
 goog.exportSymbol('proto.CreateMoodRequest', null, global);

@@ -118,8 +118,14 @@ protoc:
 	--js_out=import_style=commonjs,binary:mood-tracker-client/src/proto \
 	--govalidators_out=proto \
 	proto/mood.proto
-	grep -v 'github_com_mwitkow_go_proto_validators_validator_pb' ./mood-tracker-client/src/proto/mood_pb.d.ts > ./mood-tracker-client/src/proto/mood_pb.d.ts.tmp
+
+	grep -v 'validators_validator_pb' ./mood-tracker-client/src/proto/mood_pb.d.ts > ./mood-tracker-client/src/proto/mood_pb.d.ts.tmp
 	mv ./mood-tracker-client/src/proto/mood_pb.d.ts.tmp ./mood-tracker-client/src/proto/mood_pb.d.ts
+	grep -v 'validators_validator_pb' ./mood-tracker-client/src/proto/mood_pb.js > ./mood-tracker-client/src/proto/mood_pb.js.tmp
+	mv ./mood-tracker-client/src/proto/mood_pb.js.tmp ./mood-tracker-client/src/proto/mood_pb.js
+	printf '/* eslint-disable */\n//@ts-nocheck\n' | cat - ./mood-tracker-client/src/proto/mood_pb.js > ./mood-tracker-client/src/proto/mood_pb.js.tmp
+	mv ./mood-tracker-client/src/proto/mood_pb.js.tmp ./mood-tracker-client/src/proto/mood_pb.js
+
 
 .PHONE: install-yarn
 install-yarn:

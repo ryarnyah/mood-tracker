@@ -2,3 +2,4 @@ node_modules
 mood-tracker
 statik
 db.db
+.log

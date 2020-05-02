@@ -76,12 +76,7 @@ func (m *moodServer) AddEntry(ctx context.Context, request *proto.AddEntryReques
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		err := tx.Rollback()
-		if err != nil {
-			fmt.Println(err)
-		}
-	}()
+	defer tx.Rollback()
 
 	var entryID int
 	err = tx.QueryRowContext(ctx, `SELECT ENTRY.ENTRY_ID
@@ -140,12 +135,7 @@ func (m *moodServer) CreateMood(ctx context.Context, request *proto.CreateMoodRe
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		err := tx.Rollback()
-		if err != nil {
-			fmt.Println(err)
-		}
-	}()
+	defer tx.Rollback()
 
 	moodUUID := uuid.New()
 
@@ -172,7 +162,7 @@ func (m *moodServer) CreateMood(ctx context.Context, request *proto.CreateMoodRe
 		return nil, err
 	}
 
-	recordsAccessCodes := make([]string, request.GetNumberOfRecordsNeeded())
+	recordsAccessCodes := []string{}
 	var i uint32
 	for i = 0; i < request.GetNumberOfRecordsNeeded(); i++ {
 		entryUUID := uuid.New()
