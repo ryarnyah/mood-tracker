@@ -2,7 +2,6 @@
 // file: mood.proto
 
 import * as jspb from "google-protobuf";
-import * as github_com_mwitkow_go_proto_validators_validator_pb from "./github.com/mwitkow/go-proto-validators/validator_pb";
 
 export class Entry extends jspb.Message {
   getRecord(): number;

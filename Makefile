@@ -114,10 +114,12 @@ protoc:
 	--proto_path=${GOPATH}/src \
 	--go_out=plugins=grpc:proto \
 	--plugin=protoc-gen-ts=./mood-tracker-client/node_modules/.bin/protoc-gen-ts \
-	--ts_out=service:mood-tracker-client/src \
-	--js_out=import_style=commonjs,binary:mood-tracker-client/src \
+	--ts_out=service=grpc-web:mood-tracker-client/src/proto \
+	--js_out=import_style=commonjs,binary:mood-tracker-client/src/proto \
 	--govalidators_out=proto \
 	proto/mood.proto
+	grep -v 'github_com_mwitkow_go_proto_validators_validator_pb' ./mood-tracker-client/src/proto/mood_pb.d.ts > ./mood-tracker-client/src/proto/mood_pb.d.ts.tmp
+	mv ./mood-tracker-client/src/proto/mood_pb.d.ts.tmp ./mood-tracker-client/src/proto/mood_pb.d.ts
 
 .PHONE: install-yarn
 install-yarn:
@@ -166,6 +168,7 @@ clean: ## Cleanup any build binaries or packages
 	@echo "+ $@"
 	$(foreach BINARY,$(BINARIES), $(RM) $(BINARY))
 	$(RM) -r $(BUILDDIR)
+	$(RM) -r mood-tracker-client/dist
 
 .PHONY: help
 help:
