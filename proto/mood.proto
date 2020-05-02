@@ -1,39 +1,56 @@
 syntax = "proto3";
+option go_package = ".;mood";
+import "github.com/mwitkow/go-proto-validators/validator.proto";
 
 message Entry {
-        uint32 record = 1;
-        string comment = 2;
+  uint32 record = 1 [(validator.field) = {int_gt: 0, int_lt: 4}];
+  string comment = 2 [(validator.field) = {length_lt: 129}];
 }
 
 message AddEntryRequest {
-        Entry entry = 1;
-        string access_code = 2;
-        string ref_access_code = 3;
+  Entry entry = 1 [(validator.field) = {msg_exists : true}];
+
+  int64 mood_id = 2 [(validator.field) = {int_gt: 0}];
+  string entry_access_code = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
 }
 
 message AddEntryResponse {}
 
-message ListEntryRequest {
-        string access_code = 1;
+message GetMoodFromEntryRequest {
+  int64 mood_id = 2 [(validator.field) = {int_gt: 0}];
+  string entry_access_code = 3 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
 }
 
-message ListEntryResponse {
-        repeated Entry entries = 1;
+message GetMoodFromEntryResponse {
+  string title = 1 [(validator.field) = {string_not_empty: true, length_lt: 129}];
+  string content = 2 [(validator.field) = {length_lt: 513}];
+}
+
+message GetMoodRequest {
+  int64 mood_id = 1 [(validator.field) = {int_gt: 0}];
+  string mood_access_code = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+}
+
+message GetMoodResponse {
+  repeated Entry entries = 1;
 }
 
 message CreateMoodRequest {
-        string title = 1;
-        string content = 2;
-        uint32 number_of_records_needed = 3;
+  string title = 1 [(validator.field) = {string_not_empty: true, length_lt: 129}];
+  string content = 2 [(validator.field) = {length_lt: 513}];
+  uint32 number_of_records_needed = 3 [(validator.field) = {int_gt: 0}];
 }
 
 message CreateMoodResponse {
-        string access_code = 1;
-        repeated string records_access_codes = 3;
+  int64 mood_id = 1 [(validator.field) = {int_gt: 0}];
+  string mood_access_code = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
+
+  repeated string entries_access_codes = 3;
 }
 
 service Mood {
-        rpc AddEntry(AddEntryRequest) returns (AddEntryResponse) {}
-        rpc ListEntries(ListEntryRequest) returns (ListEntryResponse) {}
-        rpc CreateMood(CreateMoodRequest) returns (CreateMoodResponse) {}
+  rpc AddEntry(AddEntryRequest) returns (AddEntryResponse) {}
+  rpc GetMoodFromEntry(GetMoodFromEntryRequest) returns (GetMoodFromEntryResponse) {}
+  rpc GetMood(GetMoodRequest) returns (GetMoodResponse) {}
+  rpc CreateMood(CreateMoodRequest) returns (CreateMoodResponse) {}
 }
