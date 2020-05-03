@@ -2,5 +2,6 @@ node_modules
 ./mood-tracker
 dist
 statik
+statik_migrations
 db.db
 .log

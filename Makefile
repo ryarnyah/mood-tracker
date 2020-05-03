@@ -141,7 +141,8 @@ yarn-build: yarn
 
 .PHONY: statik
 statik:
-	statik -src=./mood-tracker-client/dist
+	statik -ns public -p statik -src=./mood-tracker-client/dist
+	statik -ns migrations -p statik_migrations -src=./migrations
 
 .PHONY: bump-version
 BUMP := patch

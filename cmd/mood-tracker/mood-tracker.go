@@ -27,7 +27,9 @@ import (
 	proto "github.com/ryarnyah/mood-tracker/proto"
 	"github.com/ryarnyah/mood-tracker/version"
 
+	migrate_statik "github.com/ryarnyah/mood-tracker/pkg/migrate/statik"
 	_ "github.com/ryarnyah/mood-tracker/statik"
+	_ "github.com/ryarnyah/mood-tracker/statik_migrations"
 )
 
 var (
@@ -79,8 +81,17 @@ func main() {
 	if err != nil {
 		glog.Fatalf("unable to migrate db %v", err)
 	}
-	m, err := migrate.NewWithDatabaseInstance(
-		"file://./migrations",
+	statikMigrationFS, err := fs.NewWithNamespace("migrations")
+	if err != nil {
+		glog.Fatal(err)
+	}
+	d, err := migrate_statik.WithInstance(statikMigrationFS, "/")
+	if err != nil {
+		glog.Fatal(err)
+	}
+	m, err := migrate.NewWithInstance(
+		"statik",
+		d,
 		"sqlite3", driver,
 	)
 	if err != nil {
@@ -110,7 +121,7 @@ func main() {
 	wrappedServer := grpcweb.WrapServer(grpcServer)
 	handler := http.StripPrefix("/grpc/", wrappedServer)
 
-	statikFS, err := fs.New()
+	statikFS, err := fs.NewWithNamespace("public")
 	if err != nil {
 		glog.Fatal(err)
 	}
