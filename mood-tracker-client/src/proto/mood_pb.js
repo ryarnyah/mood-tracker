@@ -1170,7 +1170,7 @@ proto.GetMoodRequest.prototype.setMoodAccessCode = function(value) {
  * @private {!Array<number>}
  * @const
  */
-proto.GetMoodResponse.repeatedFields_ = [1];
+proto.GetMoodResponse.repeatedFields_ = [3];
 
 
 
@@ -1203,6 +1203,8 @@ proto.GetMoodResponse.prototype.toObject = function(opt_includeInstance) {
  */
 proto.GetMoodResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
+    title: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    content: jspb.Message.getFieldWithDefault(msg, 2, ""),
     entriesList: jspb.Message.toObjectList(msg.getEntriesList(),
     proto.Entry.toObject, includeInstance),
     statsMap: (f = msg.getStatsMap()) ? f.toObject(includeInstance, undefined) : []
@@ -1243,11 +1245,19 @@ proto.GetMoodResponse.deserializeBinaryFromReader = function(msg, reader) {
     var field = reader.getFieldNumber();
     switch (field) {
     case 1:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setTitle(value);
+      break;
+    case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setContent(value);
+      break;
+    case 3:
       var value = new proto.Entry;
       reader.readMessage(value,proto.Entry.deserializeBinaryFromReader);
       msg.addEntries(value);
       break;
-    case 2:
+    case 4:
       var value = msg.getStatsMap();
       reader.readMessage(value, function(message, reader) {
         jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readUint32, jspb.BinaryReader.prototype.readInt64, null, 0, 0);
@@ -1282,28 +1292,78 @@ proto.GetMoodResponse.prototype.serializeBinary = function() {
  */
 proto.GetMoodResponse.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = message.getTitle();
+  if (f.length > 0) {
+    writer.writeString(
+      1,
+      f
+    );
+  }
+  f = message.getContent();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
   f = message.getEntriesList();
   if (f.length > 0) {
     writer.writeRepeatedMessage(
-      1,
+      3,
       f,
       proto.Entry.serializeBinaryToWriter
     );
   }
   f = message.getStatsMap(true);
   if (f && f.getLength() > 0) {
-    f.serializeBinary(2, writer, jspb.BinaryWriter.prototype.writeUint32, jspb.BinaryWriter.prototype.writeInt64);
+    f.serializeBinary(4, writer, jspb.BinaryWriter.prototype.writeUint32, jspb.BinaryWriter.prototype.writeInt64);
   }
 };
 
 
 /**
- * repeated Entry entries = 1;
+ * optional string title = 1;
+ * @return {string}
+ */
+proto.GetMoodResponse.prototype.getTitle = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.GetMoodResponse} returns this
+ */
+proto.GetMoodResponse.prototype.setTitle = function(value) {
+  return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional string content = 2;
+ * @return {string}
+ */
+proto.GetMoodResponse.prototype.getContent = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.GetMoodResponse} returns this
+ */
+proto.GetMoodResponse.prototype.setContent = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * repeated Entry entries = 3;
  * @return {!Array<!proto.Entry>}
  */
 proto.GetMoodResponse.prototype.getEntriesList = function() {
   return /** @type{!Array<!proto.Entry>} */ (
-    jspb.Message.getRepeatedWrapperField(this, proto.Entry, 1));
+    jspb.Message.getRepeatedWrapperField(this, proto.Entry, 3));
 };
 
 
@@ -1312,7 +1372,7 @@ proto.GetMoodResponse.prototype.getEntriesList = function() {
  * @return {!proto.GetMoodResponse} returns this
 */
 proto.GetMoodResponse.prototype.setEntriesList = function(value) {
-  return jspb.Message.setRepeatedWrapperField(this, 1, value);
+  return jspb.Message.setRepeatedWrapperField(this, 3, value);
 };
 
 
@@ -1322,7 +1382,7 @@ proto.GetMoodResponse.prototype.setEntriesList = function(value) {
  * @return {!proto.Entry}
  */
 proto.GetMoodResponse.prototype.addEntries = function(opt_value, opt_index) {
-  return jspb.Message.addToRepeatedWrapperField(this, 1, opt_value, proto.Entry, opt_index);
+  return jspb.Message.addToRepeatedWrapperField(this, 3, opt_value, proto.Entry, opt_index);
 };
 
 
@@ -1336,14 +1396,14 @@ proto.GetMoodResponse.prototype.clearEntriesList = function() {
 
 
 /**
- * map<uint32, int64> stats = 2;
+ * map<uint32, int64> stats = 4;
  * @param {boolean=} opt_noLazyCreate Do not create the map if
  * empty, instead returning `undefined`
  * @return {!jspb.Map<number,number>}
  */
 proto.GetMoodResponse.prototype.getStatsMap = function(opt_noLazyCreate) {
   return /** @type {!jspb.Map<number,number>} */ (
-      jspb.Message.getMapField(this, 2, opt_noLazyCreate,
+      jspb.Message.getMapField(this, 4, opt_noLazyCreate,
       null));
 };
 

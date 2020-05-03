@@ -1,161 +1,99 @@
 <template>
-  <div>
-      <form novalidate class="md-layout md-alignment-top-center" @submit.prevent="validateForm">
-          <md-card class="md-layout-item md-size-50 md-small-size-100">
-              <md-card-header>
-                  <div class="md-title">Create Mood</div>
-              </md-card-header>
-              <md-card-content>
-                  <div class="md-layout md-gutter">
-                      <div class="md-layout-item md-small-size-100">
-                          <md-field :class="getValidationClass('title')">
-                              <label for="title">Title</label>
-                              <md-input name="title" id="title" v-model="form.title" :disabled="sending" maxlength="128" />
-                              <span class="md-error" v-if="!$v.form.title.required">The title is required</span>
-                              <span class="md-error" v-else-if="!$v.form.title.minlength">Invalid title</span>
-                              <span class="md-error" v-else-if="!$v.form.title.maxlength">Invalid title</span>
-                          </md-field>
-                      </div>
-                      <div class="md-layout-item md-small-size-100">
-                          <md-field :class="getValidationClass('content')">
-                              <label for="content">Content</label>
-                              <md-textarea md-autogrow name="content" id="content" v-model="form.content" :disabled="sending" maxlength="512" />
-                              <span class="md-error" v-if="!$v.form.title.maxlength">Invalid content</span>
-                          </md-field>
-                      </div>
-                      <div class="md-layout-item md-small-size-100">
-                          <md-field :class="getValidationClass('numberOfEntries')">
-                              <label for="numberOfEntries">Number of answer needed</label>
-                              <md-input name="numberOfEntries" id="numberOfEntries" v-model="form.numberOfEntries" :disabled="sending" />
-                              <span class="md-error" v-if="!$v.form.numberOfEntries.required">The Number of entries is required</span>
-                              <span class="md-error" v-else-if="!$v.form.numberOfEntries.beetween">Invalid content</span>
-                          </md-field>
-                      </div>
-                  </div>
-              </md-card-content>
-              <md-progress-bar md-mode="indeterminate" v-if="sending" />
-              <md-card-actions>
-                  <md-button type="submit" class="md-primary" :disabled="sending">Create mood</md-button>
-              </md-card-actions>
-              <md-snackbar :md-active.sync="moodSaved">The mood was created with success!</md-snackbar>
-          </md-card>
-      </form>
-      <div class="md-layout md-alignment-top-center" v-if="moodHasData">
-          <md-card class="md-layout-item md-size-50 md-small-size-100">
-              <md-card-header>
-                  <div class="md-title"><a v-bind:href="moodUrl">Mood Url (must save it somewhere)</a></div>
-              </md-card-header>
-
-              <md-card-content>
-                  <md-table>
-                      <md-table-row>
-                          <md-table-head md-numeric>Entry URLs</md-table-head>
-                      </md-table-row>
-                      <md-table-row v-for="entry in entriesAccessCodesList" :key="entry">
-                          <md-table-head md-numeric><a v-bind:href="entryUrl(entry)">{{ entryUrl(entry) }}</a></md-table-head>
-                      </md-table-row>
-                  </md-table>
-              </md-card-content>
-          </md-card>
-      </div>
-  </div>
+    <div>
+        <div v-if="title != null && content != null">
+            <div>
+                <h1>{{ title }}</h1>
+                <h2>{{ content }}</h2>
+            </div>
+            <div class="md-layout md-alignment-top-center">
+                <md-card class="md-layout-item md-size-50 md-small-size-100">
+                    <md-card-content>
+                        <md-table>
+                            <md-table-row>
+                                <md-table-head>Record</md-table-head>
+                                <md-table-head>Count</md-table-head>
+                            </md-table-row>
+                            <md-table-row v-for="entry in stats.entries()" :key="entry[0]">
+                                <md-table-cell md-numeric>{{ getLabelForRecord(entry[0]) }}</md-table-cell>
+                                <md-table-cell md-numeric>{{ entry[1] }}</md-table-cell>
+                            </md-table-row>
+                        </md-table>
+                        <md-table>
+                            <md-table-row>
+                                <md-table-head>Record</md-table-head>
+                                <md-table-head>Comment</md-table-head>
+                            </md-table-row>
+                            <md-table-row v-for="entry in entries" :key="entry.record">
+                                <md-table-cell md-numeric>{{ getLabelForRecord(entry.getRecord()) }}</md-table-cell>
+                                <md-table-cell md-numeric>{{ entry.getComment() }}</md-table-cell>
+                            </md-table-row>
+                        </md-table>
+                    </md-card-content>
+                </md-card>
+            </div>
+        </div>
+        <md-snackbar :md-active.sync="showError">{{ errorMessage }}</md-snackbar>
+    </div>
 </template>
 
 <script>
 import { grpc } from '@improbable-eng/grpc-web';
 import { Mood } from '../proto/mood_pb_service';
-import { CreateMoodRequest } from '../proto/mood_pb';
-
-import { validationMixin } from 'vuelidate';
-import {
-    required,
-    minLength,
-    maxLength,
-    between
-  } from 'vuelidate/lib/validators';
+import { GetMoodRequest } from '../proto/mood_pb';
 
 export default {
     name: 'GetMood',
-    mixins: [validationMixin],
-    computed: {
-        moodUrl: function() {
-            return window.location.protocol + '//' + window.location.host + '/mood/' + this.moodId + '/' + this.moodAccessCode;
-        }
-    },
+    props: [
+        'moodId',
+        'moodAccessCode'
+    ],
     data: () => ({
-      form: {
-          title: null,
-          content: null,
-          numberOfEntries: null
-      },
       sending: false,
-      moodSaved: false,
-      moodHasData: false,
-      entriesAccessCodesList: null,
-      moodId: null,
-      moodAccessCode: null
+      title: null,
+      content: null,
+      entries: [],
+      stats: null,
+      showError: false,
+      errorMessage: null
     }),
-    validations: {
-      form: {
-        title: {
-            required,
-            minLength: minLength(1),
-            maxLength: maxLength(128)
-        },
-        content: {
-            minLength: minLength(1),
-            maxLength: maxLength(512)
-        },
-        numberOfEntries: {
-            required,
-            between: between(1, 20)
-        }
-      }
+    created () {
+        this.getMood();
     },
     methods: {
-      entryUrl(entryAccessCode) {
-          return window.location.protocol + '//' + window.location.host + '/entry/' + this.moodId + '/' + entryAccessCode;
-      },
-      getValidationClass (fieldName) {
-        const field = this.$v.form[fieldName]
-
-        if (field) {
-          return {
-            'md-invalid': field.$invalid && field.$dirty
+      getLabelForRecord(record) {
+          switch (record) {
+              case 0:
+                  return 'Not answered';
+              case 1:
+                  return 'Bad';
+              case 2:
+                  return 'Normal';
+              case 3:
+                  return 'Perfect';
           }
-        }
       },
-      saveMood () {
-          this.sending = true;
-          let request = new CreateMoodRequest();
-          request.setTitle(this.form.title);
-          request.setContent(this.form.content);
-          request.setNumberOfRecordsNeeded(this.form.numberOfEntries);
+      getMood () {
+        let request = new GetMoodRequest();
+        request.setMoodId(this.moodId);
+        request.setMoodAccessCode(this.moodAccessCode);
 
-          let v = this;
-          grpc.unary(Mood.CreateMood, {
-              request: request,
-              host: '/grpc',
-              onEnd: function(res) {
-                  const { status, message } = res;
-                  if (status === grpc.Code.OK && message) {
-                      v.entriesAccessCodesList = message.getEntriesAccessCodesList();
-                      v.moodId = message.getMoodId();
-                      v.moodAccessCode = message.getMoodAccessCode();
-                      v.moodSaved = true;
-                      v.moodHasData = true;
-                  }
-
-                  v.sending = false;
-              }
-          });
-      },
-      validateForm () {
-        this.$v.$touch()
-
-        if (!this.$v.$invalid) {
-          this.saveMood()
-        }
+        let v = this;
+        grpc.unary(Mood.GetMood, {
+            request: request,
+            host: '/grpc',
+            onEnd: function(res) {
+                const { status, statusMessage, message } = res;
+                if (status === grpc.Code.OK && message) {
+                    v.title = message.getTitle();
+                    v.content = message.getContent();
+                    v.entries = message.getEntriesList();
+                    v.stats = message.getStatsMap();
+                } else if (status !== grpc.Code.OK) {
+                    v.showError = true;
+                    v.errorMessage = statusMessage;
+                }
+            }
+        });
       }
     }
 }

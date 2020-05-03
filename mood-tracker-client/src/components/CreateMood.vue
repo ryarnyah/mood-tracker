@@ -16,6 +16,8 @@
                               <span class="md-error" v-else-if="!$v.form.title.maxlength">Invalid title</span>
                           </md-field>
                       </div>
+                  </div>
+                  <div>
                       <div class="md-layout-item md-small-size-100">
                           <md-field :class="getValidationClass('content')">
                               <label for="content">Content</label>
@@ -23,6 +25,8 @@
                               <span class="md-error" v-if="!$v.form.title.maxlength">Invalid content</span>
                           </md-field>
                       </div>
+                  </div>
+                  <div>
                       <div class="md-layout-item md-small-size-100">
                           <md-field :class="getValidationClass('numberOfEntries')">
                               <label for="numberOfEntries">Number of answer needed</label>
@@ -49,7 +53,7 @@
                           <md-table-head md-numeric>Mood Url (must save it somewhere)</md-table-head>
                       </md-table-row>
                       <md-table-row>
-                          <md-table-head md-numeric><a v-bind:href="moodUrl">{{ moodUrl }}</a></md-table-head>
+                          <md-table-cell md-numeric><a v-bind:href="moodUrl">{{ moodUrl }}</a></md-table-cell>
                       </md-table-row>
                   </md-table>
                   <md-table>
@@ -57,7 +61,7 @@
                           <md-table-head md-numeric>Entries URLs</md-table-head>
                       </md-table-row>
                       <md-table-row v-for="entry in entriesAccessCodesList" :key="entry">
-                          <md-table-head md-numeric><a v-bind:href="entryUrl(entry)">{{ entryUrl(entry) }}</a></md-table-head>
+                          <md-table-cell md-numeric><a v-bind:href="entryUrl(entry)">{{ entryUrl(entry) }}</a></md-table-cell>
                       </md-table-row>
                   </md-table>
               </md-card-content>

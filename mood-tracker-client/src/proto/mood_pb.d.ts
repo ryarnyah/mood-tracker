@@ -146,6 +146,12 @@ export namespace GetMoodRequest {
 }
 
 export class GetMoodResponse extends jspb.Message {
+  getTitle(): string;
+  setTitle(value: string): void;
+
+  getContent(): string;
+  setContent(value: string): void;
+
   clearEntriesList(): void;
   getEntriesList(): Array<Entry>;
   setEntriesList(value: Array<Entry>): void;
@@ -165,6 +171,8 @@ export class GetMoodResponse extends jspb.Message {
 
 export namespace GetMoodResponse {
   export type AsObject = {
+    title: string,
+    content: string,
     entriesList: Array<Entry.AsObject>,
     statsMap: Array<[number, number]>,
   }

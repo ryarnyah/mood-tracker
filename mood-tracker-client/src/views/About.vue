@@ -1,5 +1,5 @@
 <template>
   <div class="about">
-    <h1>This is an about page</h1>
+    <h1>A tools to check team mood</h1>
   </div>
 </template>

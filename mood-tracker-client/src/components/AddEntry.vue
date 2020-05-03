@@ -48,7 +48,6 @@ export default {
         'moodId',
         'entryAccessCode'
     ],
-    computed: {},
     data: () => ({
       title: null,
       content: null,

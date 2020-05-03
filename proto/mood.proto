@@ -32,8 +32,10 @@ message GetMoodRequest {
 }
 
 message GetMoodResponse {
-  repeated Entry entries = 1;
-  map<uint32, int64> stats = 2;
+  string title = 1 [(validator.field) = {string_not_empty: true, length_lt: 129}];
+  string content = 2 [(validator.field) = {length_lt: 513}];
+  repeated Entry entries = 3;
+  map<uint32, int64> stats = 4;
 }
 
 message CreateMoodRequest {

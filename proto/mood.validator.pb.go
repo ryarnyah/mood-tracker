@@ -98,6 +98,15 @@ func (this *GetMoodRequest) Validate() error {
 	return nil
 }
 func (this *GetMoodResponse) Validate() error {
+	if this.Title == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Title", fmt.Errorf(`value '%v' must not be an empty string`, this.Title))
+	}
+	if !(len(this.Title) < 129) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Title", fmt.Errorf(`value '%v' must have a length smaller than '129'`, this.Title))
+	}
+	if !(len(this.Content) < 513) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Content", fmt.Errorf(`value '%v' must have a length smaller than '513'`, this.Content))
+	}
 	for _, item := range this.Entries {
 		if item != nil {
 			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
