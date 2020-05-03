@@ -1,5 +1,6 @@
 node_modules
-mood-tracker
+./mood-tracker
+dist
 statik
 db.db
 .log

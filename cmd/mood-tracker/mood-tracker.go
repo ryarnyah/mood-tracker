@@ -8,12 +8,14 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/sqlite3"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/golang/glog"
 	"github.com/google/uuid"
+	"github.com/gorilla/mux"
 	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/rakyll/statik/fs"
@@ -59,7 +61,8 @@ func (m *moodServer) GetMoodFromEntry(ctx context.Context, request *proto.GetMoo
 
 	err := m.db.QueryRowContext(ctx, `SELECT MOOD.TITLE, MOOD.CONTENT
           FROM MOOD JOIN ENTRY ON MOOD.MOOD_ID = ENTRY.MOOD_ID
-          WHERE ENTRY.MOOD_ID = ? AND ENTRY.ENTRY_ACCESS_CODE = ?`, request.GetMoodId(), request.GetEntryAccessCode()).Scan(&title, &content)
+          LEFT JOIN RECORD ON ENTRY.ENTRY_ID = RECORD.ENTRY_ID
+          WHERE ENTRY.MOOD_ID = ? AND ENTRY.ENTRY_ACCESS_CODE = ? AND RECORD.ENTRY_ID IS NULL`, request.GetMoodId(), request.GetEntryAccessCode()).Scan(&title, &content)
 
 	if err != nil {
 		return nil, err
@@ -250,13 +253,31 @@ func main() {
 
 	staticHandler := http.FileServer(statikFS)
 
-	mux := http.NewServeMux()
-	mux.Handle("/", staticHandler)
-	mux.Handle("/grpc/", handler)
+	r := mux.NewRouter()
+	r.PathPrefix("/grpc/").Handler(handler)
+
+	/* Tips to default on index.html for vuejs app */
+	err = fs.Walk(statikFS, "/", func(path string, info os.FileInfo, err error) error {
+		r.Path(path).Handler(staticHandler)
+		return nil
+	})
+	if err != nil {
+		glog.Fatal(err)
+	}
+
+	r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		f, err := statikFS.Open("/index.html")
+		if err != nil {
+			glog.Error(err)
+			staticHandler.ServeHTTP(w, r)
+			return
+		}
+		http.ServeContent(w, r, "index.html", time.Now(), f)
+	})
 
 	httpServer := http.Server{
 		Addr:    *host,
-		Handler: mux,
+		Handler: r,
 	}
 
 	if *enableTLS {
