@@ -38,7 +38,7 @@ message GetMoodResponse {
 message CreateMoodRequest {
   string title = 1 [(validator.field) = {string_not_empty: true, length_lt: 129}];
   string content = 2 [(validator.field) = {length_lt: 513}];
-  uint32 number_of_records_needed = 3 [(validator.field) = {int_gt: 0}];
+  uint32 number_of_records_needed = 3 [(validator.field) = {int_gt: 0, int_lt: 21}];
 }
 
 message CreateMoodResponse {

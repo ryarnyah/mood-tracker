@@ -120,6 +120,9 @@ func (this *CreateMoodRequest) Validate() error {
 	if !(this.NumberOfRecordsNeeded > 0) {
 		return github_com_mwitkow_go_proto_validators.FieldError("NumberOfRecordsNeeded", fmt.Errorf(`value '%v' must be greater than '0'`, this.NumberOfRecordsNeeded))
 	}
+	if !(this.NumberOfRecordsNeeded < 21) {
+		return github_com_mwitkow_go_proto_validators.FieldError("NumberOfRecordsNeeded", fmt.Errorf(`value '%v' must be less than '21'`, this.NumberOfRecordsNeeded))
+	}
 	return nil
 }
 
