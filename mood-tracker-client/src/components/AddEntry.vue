@@ -29,6 +29,7 @@
             <div v-if="entrySaved">
                 Thank you for your time.
             </div>
+            <md-snackbar :md-active.sync="showError">{{ errorMessage }}</md-snackbar>
         </div>
         <div v-if="title == null && content == null">
             You have already answered this mood.
@@ -53,7 +54,9 @@ export default {
       content: null,
       comment: null,
       sending: false,
-      entrySaved: false
+      entrySaved: false,
+      showError: false,
+      errorMessage: null
     }),
     created () {
         this.getMood();
@@ -70,7 +73,6 @@ export default {
       },
       getMood () {
         let request = new GetMoodFromEntryRequest();
-        console.log(this.entryAccessCode)
         request.setMoodId(this.moodId);
         request.setEntryAccessCode(this.entryAccessCode);
 
@@ -79,10 +81,13 @@ export default {
             request: request,
             host: '/grpc',
             onEnd: function(res) {
-                const { status, message } = res;
+                const { status, statusMessage, message } = res;
                 if (status === grpc.Code.OK && message) {
                     v.title = message.getTitle();
                     v.content = message.getContent();
+                } else if (status !== grpc.Code.OK) {
+                    v.showError = true;
+                    v.errorMessage = statusMessage;
                 }
             }
         });
@@ -103,9 +108,12 @@ export default {
               request: request,
               host: '/grpc',
               onEnd: function(res) {
-                  const { status, message } = res;
+                  const { status, statusMessage, message } = res;
                   if (status === grpc.Code.OK && message) {
                       v.entrySaved = true;
+                  } else if (status !== grpc.Code.OK) {
+                      v.showError = true;
+                      v.errorMessage = statusMessage;
                   }
 
                   v.sending = false;

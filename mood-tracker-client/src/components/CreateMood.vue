@@ -38,6 +38,7 @@
                   <md-button type="submit" class="md-primary" :disabled="sending">Create mood</md-button>
               </md-card-actions>
               <md-snackbar :md-active.sync="moodSaved">The mood was created with success!</md-snackbar>
+              <md-snackbar :md-active.sync="showError">{{ errorMessage }}</md-snackbar>
           </md-card>
       </form>
       <div class="md-layout md-alignment-top-center" v-if="moodHasData">
@@ -93,7 +94,9 @@ export default {
       moodHasData: false,
       entriesAccessCodesList: null,
       moodId: null,
-      moodAccessCode: null
+      moodAccessCode: null,
+      showError: false,
+      errorMessage: null
     }),
     validations: {
       form: {
@@ -137,13 +140,16 @@ export default {
               request: request,
               host: '/grpc',
               onEnd: function(res) {
-                  const { status, message } = res;
+                  const { status, statusMessage, message } = res;
                   if (status === grpc.Code.OK && message) {
                       v.entriesAccessCodesList = message.getEntriesAccessCodesList();
                       v.moodId = message.getMoodId();
                       v.moodAccessCode = message.getMoodAccessCode();
                       v.moodSaved = true;
                       v.moodHasData = true;
+                  } else if (status !== grpc.Code.OK) {
+                      v.showError = true;
+                      v.errorMessage = statusMessage;
                   }
 
                   v.sending = false;

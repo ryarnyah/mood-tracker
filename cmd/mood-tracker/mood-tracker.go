@@ -91,7 +91,7 @@ func main() {
 		glog.Fatalf("unable to migrate db %v", err)
 	}
 
-	limiter := grpc_ratelimit.NewGRPCLimiter(60, 10)
+	limiter := grpc_ratelimit.NewGRPCLimiter(30, 10)
 
 	grpcServer := grpc.NewServer(
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
