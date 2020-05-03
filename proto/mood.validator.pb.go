@@ -105,6 +105,7 @@ func (this *GetMoodResponse) Validate() error {
 			}
 		}
 	}
+	// Validation of proto3 map<> fields is unsupported.
 	return nil
 }
 func (this *CreateMoodRequest) Validate() error {

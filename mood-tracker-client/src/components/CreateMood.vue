@@ -43,14 +43,18 @@
       </form>
       <div class="md-layout md-alignment-top-center" v-if="moodHasData">
           <md-card class="md-layout-item md-size-50 md-small-size-100">
-              <md-card-header>
-                  <div class="md-title"><a v-bind:href="moodUrl">Mood Url (must save it somewhere)</a></div>
-              </md-card-header>
-
               <md-card-content>
                   <md-table>
                       <md-table-row>
-                          <md-table-head md-numeric>Entry URLs</md-table-head>
+                          <md-table-head md-numeric>Mood Url (must save it somewhere)</md-table-head>
+                      </md-table-row>
+                      <md-table-row>
+                          <md-table-head md-numeric><a v-bind:href="moodUrl">{{ moodUrl }}</a></md-table-head>
+                      </md-table-row>
+                  </md-table>
+                  <md-table>
+                      <md-table-row>
+                          <md-table-head md-numeric>Entries URLs</md-table-head>
                       </md-table-row>
                       <md-table-row v-for="entry in entriesAccessCodesList" :key="entry">
                           <md-table-head md-numeric><a v-bind:href="entryUrl(entry)">{{ entryUrl(entry) }}</a></md-table-head>

@@ -33,6 +33,7 @@ message GetMoodRequest {
 
 message GetMoodResponse {
   repeated Entry entries = 1;
+  map<uint32, int64> stats = 2;
 }
 
 message CreateMoodRequest {

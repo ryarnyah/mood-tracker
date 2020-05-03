@@ -59,6 +59,7 @@ func (m *moodServer) AddEntry(ctx context.Context, request *proto.AddEntryReques
 	if err != nil {
 		return nil, err
 	}
+	defer updateEntry.Close()
 	_, err = updateEntry.Exec(entryID, request.GetEntry().GetRecord(), request.GetEntry().GetComment())
 	if err != nil {
 		return nil, err
@@ -79,6 +80,7 @@ func (m *moodServer) GetMood(ctx context.Context, request *proto.GetMoodRequest)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 	entries := make([]*proto.Entry, 0)
 	for rows.Next() {
 		var record uint32
@@ -92,8 +94,30 @@ func (m *moodServer) GetMood(ctx context.Context, request *proto.GetMoodRequest)
 			Comment: comment,
 		})
 	}
+	statRows, err := m.db.Query(`SELECT RECORD.RECORD, COUNT(1)
+          FROM ENTRY LEFT JOIN RECORD ON RECORD.ENTRY_ID = ENTRY.ENTRY_ID
+          JOIN MOOD ON MOOD.MOOD_ID = ENTRY.MOOD_ID
+          WHERE MOOD.MOOD_ID = ? AND MOOD.MOOD_ACCESS_CODE = ?
+          GROUP BY RECORD.RECORD`, request.GetMoodId(), request.GetMoodAccessCode())
+	if err != nil {
+		return nil, err
+	}
+	defer statRows.Close()
+
+	stats := make(map[uint32]int64)
+	for rows.Next() {
+		var record uint32
+		var count int64
+		err = statRows.Scan(&record, &count)
+		if err != nil {
+			return nil, err
+		}
+		stats[record] = count
+	}
+
 	return &proto.GetMoodResponse{
 		Entries: entries,
+		Stats:   stats,
 	}, nil
 }
 
@@ -128,6 +152,7 @@ func (m *moodServer) CreateMood(ctx context.Context, request *proto.CreateMoodRe
 	if err != nil {
 		return nil, err
 	}
+	defer entryStmt.Close()
 
 	recordsAccessCodes := []string{}
 	var i uint32

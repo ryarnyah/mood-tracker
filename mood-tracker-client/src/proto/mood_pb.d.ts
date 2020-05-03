@@ -151,6 +151,8 @@ export class GetMoodResponse extends jspb.Message {
   setEntriesList(value: Array<Entry>): void;
   addEntries(value?: Entry, index?: number): Entry;
 
+  getStatsMap(): jspb.Map<number, number>;
+  clearStatsMap(): void;
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetMoodResponse.AsObject;
   static toObject(includeInstance: boolean, msg: GetMoodResponse): GetMoodResponse.AsObject;
@@ -164,6 +166,7 @@ export class GetMoodResponse extends jspb.Message {
 export namespace GetMoodResponse {
   export type AsObject = {
     entriesList: Array<Entry.AsObject>,
+    statsMap: Array<[number, number]>,
   }
 }
 

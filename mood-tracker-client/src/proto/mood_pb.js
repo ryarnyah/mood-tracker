@@ -1204,7 +1204,8 @@ proto.GetMoodResponse.prototype.toObject = function(opt_includeInstance) {
 proto.GetMoodResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
     entriesList: jspb.Message.toObjectList(msg.getEntriesList(),
-    proto.Entry.toObject, includeInstance)
+    proto.Entry.toObject, includeInstance),
+    statsMap: (f = msg.getStatsMap()) ? f.toObject(includeInstance, undefined) : []
   };
 
   if (includeInstance) {
@@ -1246,6 +1247,12 @@ proto.GetMoodResponse.deserializeBinaryFromReader = function(msg, reader) {
       reader.readMessage(value,proto.Entry.deserializeBinaryFromReader);
       msg.addEntries(value);
       break;
+    case 2:
+      var value = msg.getStatsMap();
+      reader.readMessage(value, function(message, reader) {
+        jspb.Map.deserializeBinary(message, reader, jspb.BinaryReader.prototype.readUint32, jspb.BinaryReader.prototype.readInt64, null, 0, 0);
+         });
+      break;
     default:
       reader.skipField();
       break;
@@ -1282,6 +1289,10 @@ proto.GetMoodResponse.serializeBinaryToWriter = function(message, writer) {
       f,
       proto.Entry.serializeBinaryToWriter
     );
+  }
+  f = message.getStatsMap(true);
+  if (f && f.getLength() > 0) {
+    f.serializeBinary(2, writer, jspb.BinaryWriter.prototype.writeUint32, jspb.BinaryWriter.prototype.writeInt64);
   }
 };
 
@@ -1322,6 +1333,28 @@ proto.GetMoodResponse.prototype.addEntries = function(opt_value, opt_index) {
 proto.GetMoodResponse.prototype.clearEntriesList = function() {
   return this.setEntriesList([]);
 };
+
+
+/**
+ * map<uint32, int64> stats = 2;
+ * @param {boolean=} opt_noLazyCreate Do not create the map if
+ * empty, instead returning `undefined`
+ * @return {!jspb.Map<number,number>}
+ */
+proto.GetMoodResponse.prototype.getStatsMap = function(opt_noLazyCreate) {
+  return /** @type {!jspb.Map<number,number>} */ (
+      jspb.Message.getMapField(this, 2, opt_noLazyCreate,
+      null));
+};
+
+
+/**
+ * Clears values from the map. The map will be non-null.
+ * @return {!proto.GetMoodResponse} returns this
+ */
+proto.GetMoodResponse.prototype.clearStatsMap = function() {
+  this.getStatsMap().clear();
+  return this;};
 
 
 
