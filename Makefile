@@ -27,7 +27,7 @@ GO_LDFLAGS=-ldflags "-w $(call CTIMEVAR,$(1))"
 GO_LDFLAGS_STATIC=-ldflags "-w $(call CTIMEVAR,$(1)) -extldflags -static"
 
 # List the GOOS and GOARCH to build
-GOOSARCHES = linux/amd64 linux/386 linux/arm linux/arm64 windows/amd64 windows/386
+GOOSARCHES = linux/amd64 linux/386
 
 all: clean build fmt lint test vet ## Runs a clean, build, fmt, lint, test, staticcheck, vet (staticcheck disable)
 
@@ -90,7 +90,7 @@ sha256sum $(BUILDDIR)/$(1)/$(2)/$(3) > $(BUILDDIR)/$(1)/$(2)/$(3).sha256;
 endef
 
 .PHONY: cross
-cross: VERSION.txt ## Builds the cross-compiled binaries, creating a clean directory structure (eg. GOOS/GOARCH/binary)
+cross: VERSION.txt protoc yarn-build statik ## Builds the cross-compiled binaries, creating a clean directory structure (eg. GOOS/GOARCH/binary)
 	@echo "+ $@"
 	$(foreach BINARY,$(BINARIES), $(foreach GOOSARCH,$(GOOSARCHES), $(call buildpretty,$(subst /,,$(dir $(GOOSARCH))),$(notdir $(GOOSARCH)),$(BINARY))))
 
@@ -104,12 +104,12 @@ sha256sum $(BUILDDIR)/$(3)-$(1)-$(2) > $(BUILDDIR)/$(3)-$(1)-$(2).sha256;
 endef
 
 .PHONY: release
-release: VERSION.txt ## Builds the cross-compiled binaries, naming them in such a way for release (eg. binary-GOOS-GOARCH)
+release: VERSION.txt protoc yarn-build statik ## Builds the cross-compiled binaries, naming them in such a way for release (eg. binary-GOOS-GOARCH)
 	@echo "+ $@"
 	$(foreach BINARY,$(BINARIES), $(foreach GOOSARCH,$(GOOSARCHES), $(call buildrelease,$(subst /,,$(dir $(GOOSARCH))),$(notdir $(GOOSARCH)),$(BINARY))))
 
 .PHONY: protoc
-protoc:
+protoc: yarn
 	protoc -I proto/ \
 	--proto_path=${GOPATH}/src \
 	--go_out=plugins=grpc:proto \
@@ -141,8 +141,8 @@ yarn-build: yarn
 
 .PHONY: statik
 statik:
-	statik -ns public -p statik -src=./mood-tracker-client/dist
-	statik -ns migrations -p statik_migrations -src=./migrations
+	statik -f -ns public -p statik -src=./mood-tracker-client/dist
+	statik -f -ns migrations -p statik_migrations -src=./migrations
 
 .PHONY: bump-version
 BUMP := patch
@@ -198,10 +198,11 @@ docker push $(BASE_REPOSITORY)/$(3)-$(1)-$(2):$(VERSION);
 endef
 
 .PHONY: dev-dependencies
-dev-dependencies: yarn-install ## Install all dev dependencies
+dev-dependencies: install-yarn ## Install all dev dependencies
 	@GO111MODULE=off go get -v -u github.com/jessfraz/junk/sembump
 	@GO111MODULE=off go get -v -u honnef.co/go/tools/cmd/staticcheck
 	@GO111MODULE=off go get -v -u golang.org/x/lint/golint
 	@GO111MODULE=off go get -v -u github.com/golang/protobuf/protoc-gen-go
 	@GO111MODULE=off go get -v -u github.com/mwitkow/go-proto-validators
 	@GO111MODULE=off go get -v -u github.com/rakyll/statik
+	@GO111MODULE=off go get -v -u github.com/mwitkow/go-proto-validators/protoc-gen-govalidators
