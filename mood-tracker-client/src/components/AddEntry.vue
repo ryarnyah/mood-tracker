@@ -5,10 +5,26 @@
                 <h1>{{ title }}</h1>
                 <h2>{{ content }}</h2>
             </div>
-            <div class="md-layout" v-if="!entrySaved">
-                <div class="md-layout-item" v-on:click="saveEntry(1)"><md-button class="md-raised md-accent">Bad</md-button></div>
-                <div class="md-layout-item" v-on:click="saveEntry(2)"><md-button class="md-raised">Normal</md-button></div>
-                <div class="md-layout-item" v-on:click="saveEntry(3)"><md-button class="md-raised md-primary">Perfect</md-button></div>
+            <div v-if="!entrySaved">
+                <div class="md-layout md-alignment-top-center">
+                    <md-card class="md-layout-item md-size-50 md-small-size-100">
+                        <md-card-content>
+                            <div class="md-layout md-gutter">
+                                <div class="md-layout-item md-small-size-100">
+                                    <md-field>
+                                        <label>Comment</label>
+                                        <md-textarea md-autogrow name="comment" id="comment" v-model="comment" maxlength="128" />
+                                    </md-field>
+                                </div>
+                            </div>
+                        </md-card-content>
+                    </md-card>
+                </div>
+                <div class="md-layout">
+                    <div class="md-layout-item" v-on:click="saveEntry(1)"><md-button class="md-raised md-accent">Bad</md-button></div>
+                    <div class="md-layout-item" v-on:click="saveEntry(2)"><md-button class="md-raised">Normal</md-button></div>
+                    <div class="md-layout-item" v-on:click="saveEntry(3)"><md-button class="md-raised md-primary">Perfect</md-button></div>
+                </div>
             </div>
             <div v-if="entrySaved">
                 Thank you for your time.
@@ -35,6 +51,7 @@ export default {
     data: () => ({
       title: null,
       content: null,
+      comment: null,
       sending: false,
       entrySaved: false
     }),
@@ -75,6 +92,7 @@ export default {
           let request = new AddEntryRequest();
           let entry = new Entry();
           entry.setRecord(record);
+          entry.setComment(this.comment);
 
           request.setMoodId(this.moodId);
           request.setEntryAccessCode(this.entryAccessCode);
