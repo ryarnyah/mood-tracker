@@ -1,10 +1,17 @@
 syntax = "proto3";
 option go_package = ".;mood";
 import "github.com/mwitkow/go-proto-validators/validator.proto";
+import "google/protobuf/timestamp.proto";
 
 message Entry {
   uint32 record = 1 [(validator.field) = {int_gt: 0, int_lt: 4}];
   string comment = 2 [(validator.field) = {length_lt: 129}];
+}
+
+message EntryWithDate {
+  uint32 record = 1 [(validator.field) = {int_gt: 0, int_lt: 4}];
+  string comment = 2 [(validator.field) = {length_lt: 129}];
+  google.protobuf.Timestamp record_entry = 3;
 }
 
 message AddEntryRequest {
@@ -31,11 +38,21 @@ message GetMoodRequest {
   string mood_access_code = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}];
 }
 
+message RecordStat {
+  google.protobuf.Timestamp record_entry = 1;
+  int64 count = 2;
+}
+
+message MoodStat {
+  uint32 record = 1;
+  repeated RecordStat record_stats = 2;
+}
+
 message GetMoodResponse {
   string title = 1 [(validator.field) = {string_not_empty: true, length_lt: 129}];
   string content = 2 [(validator.field) = {length_lt: 513}];
-  repeated Entry entries = 3;
-  map<uint32, int64> stats = 4;
+  repeated EntryWithDate entries = 3;
+  repeated MoodStat stats = 4;
 }
 
 message CreateMoodRequest {

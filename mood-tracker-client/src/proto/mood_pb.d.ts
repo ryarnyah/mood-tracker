@@ -2,6 +2,7 @@
 // file: mood.proto
 
 import * as jspb from "google-protobuf";
+import * as google_protobuf_timestamp_pb from "google-protobuf/google/protobuf/timestamp_pb";
 
 export class Entry extends jspb.Message {
   getRecord(): number;
@@ -24,6 +25,36 @@ export namespace Entry {
   export type AsObject = {
     record: number,
     comment: string,
+  }
+}
+
+export class EntryWithDate extends jspb.Message {
+  getRecord(): number;
+  setRecord(value: number): void;
+
+  getComment(): string;
+  setComment(value: string): void;
+
+  hasRecordEntry(): boolean;
+  clearRecordEntry(): void;
+  getRecordEntry(): google_protobuf_timestamp_pb.Timestamp | undefined;
+  setRecordEntry(value?: google_protobuf_timestamp_pb.Timestamp): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): EntryWithDate.AsObject;
+  static toObject(includeInstance: boolean, msg: EntryWithDate): EntryWithDate.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: EntryWithDate, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): EntryWithDate;
+  static deserializeBinaryFromReader(message: EntryWithDate, reader: jspb.BinaryReader): EntryWithDate;
+}
+
+export namespace EntryWithDate {
+  export type AsObject = {
+    record: number,
+    comment: string,
+    recordEntry?: google_protobuf_timestamp_pb.Timestamp.AsObject,
   }
 }
 
@@ -145,6 +176,58 @@ export namespace GetMoodRequest {
   }
 }
 
+export class RecordStat extends jspb.Message {
+  hasRecordEntry(): boolean;
+  clearRecordEntry(): void;
+  getRecordEntry(): google_protobuf_timestamp_pb.Timestamp | undefined;
+  setRecordEntry(value?: google_protobuf_timestamp_pb.Timestamp): void;
+
+  getCount(): number;
+  setCount(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): RecordStat.AsObject;
+  static toObject(includeInstance: boolean, msg: RecordStat): RecordStat.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: RecordStat, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): RecordStat;
+  static deserializeBinaryFromReader(message: RecordStat, reader: jspb.BinaryReader): RecordStat;
+}
+
+export namespace RecordStat {
+  export type AsObject = {
+    recordEntry?: google_protobuf_timestamp_pb.Timestamp.AsObject,
+    count: number,
+  }
+}
+
+export class MoodStat extends jspb.Message {
+  getRecord(): number;
+  setRecord(value: number): void;
+
+  clearRecordStatsList(): void;
+  getRecordStatsList(): Array<RecordStat>;
+  setRecordStatsList(value: Array<RecordStat>): void;
+  addRecordStats(value?: RecordStat, index?: number): RecordStat;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MoodStat.AsObject;
+  static toObject(includeInstance: boolean, msg: MoodStat): MoodStat.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: MoodStat, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MoodStat;
+  static deserializeBinaryFromReader(message: MoodStat, reader: jspb.BinaryReader): MoodStat;
+}
+
+export namespace MoodStat {
+  export type AsObject = {
+    record: number,
+    recordStatsList: Array<RecordStat.AsObject>,
+  }
+}
+
 export class GetMoodResponse extends jspb.Message {
   getTitle(): string;
   setTitle(value: string): void;
@@ -153,12 +236,15 @@ export class GetMoodResponse extends jspb.Message {
   setContent(value: string): void;
 
   clearEntriesList(): void;
-  getEntriesList(): Array<Entry>;
-  setEntriesList(value: Array<Entry>): void;
-  addEntries(value?: Entry, index?: number): Entry;
+  getEntriesList(): Array<EntryWithDate>;
+  setEntriesList(value: Array<EntryWithDate>): void;
+  addEntries(value?: EntryWithDate, index?: number): EntryWithDate;
 
-  getStatsMap(): jspb.Map<number, number>;
-  clearStatsMap(): void;
+  clearStatsList(): void;
+  getStatsList(): Array<MoodStat>;
+  setStatsList(value: Array<MoodStat>): void;
+  addStats(value?: MoodStat, index?: number): MoodStat;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetMoodResponse.AsObject;
   static toObject(includeInstance: boolean, msg: GetMoodResponse): GetMoodResponse.AsObject;
@@ -173,8 +259,8 @@ export namespace GetMoodResponse {
   export type AsObject = {
     title: string,
     content: string,
-    entriesList: Array<Entry.AsObject>,
-    statsMap: Array<[number, number]>,
+    entriesList: Array<EntryWithDate.AsObject>,
+    statsList: Array<MoodStat.AsObject>,
   }
 }
 

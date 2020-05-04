@@ -11,21 +11,33 @@
                         <md-table>
                             <md-table-row>
                                 <md-table-head>Record</md-table-head>
-                                <md-table-head>Count</md-table-head>
+                                <md-table>
+                                    <md-table-row>
+                                        <md-table-head>Date</md-table-head>
+                                        <md-table-head>Count</md-table-head>
+                                    </md-table-row>
+                                </md-table>
                             </md-table-row>
-                            <md-table-row v-for="entry in stats.entries()" :key="entry[0]">
-                                <md-table-cell md-numeric>{{ getLabelForRecord(entry[0]) }}</md-table-cell>
-                                <md-table-cell md-numeric>{{ entry[1] }}</md-table-cell>
+                            <md-table-row v-for="stat in stats" :key="stat.getRecord()">
+                                <md-table-cell>{{ getLabelForRecord(stat.getRecord()) }}</md-table-cell>
+                                <md-table>
+                                    <md-table-row v-for="recordStat in stat.getRecordStatsList()" :key="recordStat.getRecordEntry().getSeconds()">
+                                        <md-table-cell>{{ recordStat.getRecordEntry().toDate().toLocaleDateString() }}</md-table-cell>
+                                        <md-table-cell>{{ recordStat.getCount() }}</md-table-cell>
+                                    </md-table-row>
+                                </md-table>
                             </md-table-row>
                         </md-table>
                         <md-table>
                             <md-table-row>
                                 <md-table-head>Record</md-table-head>
+                                <md-table-head>Date</md-table-head>
                                 <md-table-head>Comment</md-table-head>
                             </md-table-row>
                             <md-table-row v-for="entry in entries" :key="entry.record">
-                                <md-table-cell md-numeric>{{ getLabelForRecord(entry.getRecord()) }}</md-table-cell>
-                                <md-table-cell md-numeric>{{ entry.getComment() }}</md-table-cell>
+                                <md-table-cell>{{ getLabelForRecord(entry.getRecord()) }}</md-table-cell>
+                                <md-table-cell>{{ entry.getRecordEntry().toDate().toLocaleDateString() }}</md-table-cell>
+                                <md-table-cell>{{ entry.getComment() }}</md-table-cell>
                             </md-table-row>
                         </md-table>
                     </md-card-content>
@@ -87,7 +99,7 @@ export default {
                     v.title = message.getTitle();
                     v.content = message.getContent();
                     v.entries = message.getEntriesList();
-                    v.stats = message.getStatsMap();
+                    v.stats = message.getStatsList();
                 } else if (status !== grpc.Code.OK) {
                     v.showError = true;
                     v.errorMessage = statusMessage;

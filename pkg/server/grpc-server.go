@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/golang/protobuf/ptypes"
 	"github.com/google/uuid"
 	proto "github.com/ryarnyah/mood-tracker/proto"
 )
@@ -82,46 +83,69 @@ func (m *moodServer) AddEntry(ctx context.Context, request *proto.AddEntryReques
 	return &proto.AddEntryResponse{}, nil
 }
 func (m *moodServer) GetMood(ctx context.Context, request *proto.GetMoodRequest) (*proto.GetMoodResponse, error) {
-	rows, err := m.db.Query(`SELECT RECORD.RECORD, RECORD.COMMENT
+	rows, err := m.db.Query(`SELECT RECORD.RECORD, RECORD.COMMENT, RECORD.RECORD_DATETIME
           FROM RECORD JOIN ENTRY ON RECORD.ENTRY_ID = ENTRY.ENTRY_ID
           JOIN MOOD ON MOOD.MOOD_ID = ENTRY.MOOD_ID
-          WHERE MOOD.MOOD_ID = ? AND MOOD.MOOD_ACCESS_CODE = ?`, request.GetMoodId(), request.GetMoodAccessCode())
+          WHERE MOOD.MOOD_ID = ? AND MOOD.MOOD_ACCESS_CODE = ?
+          ORDER BY RECORD.RECORD_DATETIME DESC`, request.GetMoodId(), request.GetMoodAccessCode())
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	entries := make([]*proto.Entry, 0)
+	entries := make([]*proto.EntryWithDate, 0)
 	for rows.Next() {
+		var day time.Time
 		var record uint32
 		var comment string
-		err = rows.Scan(&record, &comment)
+		err = rows.Scan(&record, &comment, &day)
 		if err != nil {
 			return nil, err
 		}
-		entries = append(entries, &proto.Entry{
-			Record:  record,
-			Comment: comment,
+		t, err := ptypes.TimestampProto(day)
+		if err != nil {
+			return nil, err
+		}
+		entries = append(entries, &proto.EntryWithDate{
+			Record:      record,
+			Comment:     comment,
+			RecordEntry: t,
 		})
 	}
-	statRows, err := m.db.Query(`SELECT ifnull(RECORD.RECORD, 0), COUNT(1)
-          FROM ENTRY LEFT JOIN RECORD ON RECORD.ENTRY_ID = ENTRY.ENTRY_ID
+	statRows, err := m.db.Query(`SELECT RECORD.RECORD, RECORD.RECORD_DATETIME, COUNT(1)
+          FROM ENTRY
+          JOIN RECORD ON RECORD.ENTRY_ID = ENTRY.ENTRY_ID
           JOIN MOOD ON MOOD.MOOD_ID = ENTRY.MOOD_ID
-          WHERE MOOD.MOOD_ID = ? AND MOOD.MOOD_ACCESS_CODE = ?
-          GROUP BY RECORD.RECORD`, request.GetMoodId(), request.GetMoodAccessCode())
+          WHERE MOOD.MOOD_ID = ? AND MOOD.MOOD_ACCESS_CODE = ? AND RECORD.RECORD_DATETIME > date('now', '-10 day')
+          GROUP BY RECORD.RECORD, RECORD.RECORD_DATETIME
+          ORDER BY RECORD.RECORD, RECORD.RECORD_DATETIME`, request.GetMoodId(), request.GetMoodAccessCode())
 	if err != nil {
 		return nil, err
 	}
 	defer statRows.Close()
 
-	stats := make(map[uint32]int64)
+	stats := make(map[uint32]*proto.MoodStat)
 	for statRows.Next() {
 		var record uint32
+		var day time.Time
 		var count int64
-		err = statRows.Scan(&record, &count)
+		err = statRows.Scan(&record, &day, &count)
 		if err != nil {
 			return nil, err
 		}
-		stats[record] = count
+		if _, ok := stats[record]; !ok {
+			stats[record] = &proto.MoodStat{
+				Record: record,
+			}
+		}
+
+		t, err := ptypes.TimestampProto(day)
+		if err != nil {
+			return nil, err
+		}
+		stats[record].RecordStats = append(stats[record].RecordStats, &proto.RecordStat{
+			RecordEntry: t,
+			Count:       count,
+		})
 	}
 
 	var title string
@@ -135,11 +159,16 @@ func (m *moodServer) GetMood(ctx context.Context, request *proto.GetMoodRequest)
 		return nil, err
 	}
 
+	moodStats := make([]*proto.MoodStat, 0)
+	for _, s := range stats {
+		moodStats = append(moodStats, s)
+	}
+
 	return &proto.GetMoodResponse{
 		Title:   title,
 		Content: content,
 		Entries: entries,
-		Stats:   stats,
+		Stats:   moodStats,
 	}, nil
 }
 
