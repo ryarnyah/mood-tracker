@@ -99,12 +99,11 @@ export default {
                   })
               }
               datasets.push({
-                  borderColor: [this.dynamicColors()],
+                  backgroundColor: this.dynamicColors(),
                   label: label,
                   data: data,
               })
           }
-          console.log(datasets)
           return {
               datasets: datasets
           };
