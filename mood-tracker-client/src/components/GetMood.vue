@@ -6,6 +6,9 @@
                 <h2>{{ content }}</h2>
             </div>
             <div class="md-layout md-alignment-top-center">
+                <MoodStatChart v-bind:chartData="chartData" cssClasses="md-layout-item md-size-50 md-small-size-100" />
+            </div>
+            <div class="md-layout md-alignment-top-center">
                 <md-card class="md-layout-item md-size-50 md-small-size-100">
                     <md-card-content>
                         <md-table>
@@ -52,6 +55,8 @@
 import { grpc } from '@improbable-eng/grpc-web';
 import { Mood } from '../proto/mood_pb_service';
 import { GetMoodRequest } from '../proto/mood_pb';
+import MoodStatChart from './MoodStatChart.vue';
+import moment from 'moment';
 
 export default {
     name: 'GetMood',
@@ -59,6 +64,9 @@ export default {
         'moodId',
         'moodAccessCode'
     ],
+    components: {
+        MoodStatChart,
+    },
     data: () => ({
       sending: false,
       title: null,
@@ -66,12 +74,41 @@ export default {
       entries: [],
       stats: null,
       showError: false,
-      errorMessage: null
+      errorMessage: null,
+      chartData: null
     }),
     created () {
         this.getMood();
     },
     methods: {
+      dynamicColors() {
+          var r = Math.floor(Math.random() * 255);
+          var g = Math.floor(Math.random() * 255);
+          var b = Math.floor(Math.random() * 255);
+          return "rgb(" + r + "," + g + "," + b + ")";
+      },
+      getChartData() {
+          var datasets = [];
+          for (const stat of this.stats) {
+              var label = this.getLabelForRecord(stat.getRecord());
+              var data = [];
+              for (const recordStat of stat.getRecordStatsList()) {
+                  data.push({
+                      t: new moment(recordStat.getRecordEntry().toDate()),
+                      y: recordStat.getCount()
+                  })
+              }
+              datasets.push({
+                  borderColor: [this.dynamicColors()],
+                  label: label,
+                  data: data,
+              })
+          }
+          console.log(datasets)
+          return {
+              datasets: datasets
+          };
+      },
       getLabelForRecord(record) {
           switch (record) {
               case 0:
@@ -100,6 +137,7 @@ export default {
                     v.content = message.getContent();
                     v.entries = message.getEntriesList();
                     v.stats = message.getStatsList();
+                    v.chartData = v.getChartData(v.stats);
                 } else if (status !== grpc.Code.OK) {
                     v.showError = true;
                     v.errorMessage = statusMessage;

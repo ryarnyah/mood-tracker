@@ -115,7 +115,7 @@ func (m *moodServer) GetMood(ctx context.Context, request *proto.GetMoodRequest)
           FROM ENTRY
           JOIN RECORD ON RECORD.ENTRY_ID = ENTRY.ENTRY_ID
           JOIN MOOD ON MOOD.MOOD_ID = ENTRY.MOOD_ID
-          WHERE MOOD.MOOD_ID = ? AND MOOD.MOOD_ACCESS_CODE = ? AND RECORD.RECORD_DATETIME > date('now', '-10 day')
+          WHERE MOOD.MOOD_ID = ? AND MOOD.MOOD_ACCESS_CODE = ? AND RECORD.RECORD_DATETIME > date('now', '-7 day')
           GROUP BY RECORD.RECORD, RECORD.RECORD_DATETIME
           ORDER BY RECORD.RECORD, RECORD.RECORD_DATETIME`, request.GetMoodId(), request.GetMoodAccessCode())
 	if err != nil {
