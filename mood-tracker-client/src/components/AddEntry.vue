@@ -32,7 +32,7 @@
             <md-snackbar :md-active.sync="showError">{{ errorMessage }}</md-snackbar>
         </div>
         <div v-if="title == null && content == null">
-            You have already answered this mood.
+            You have already answered this mood today.
         </div>
     </div>
 </template>
