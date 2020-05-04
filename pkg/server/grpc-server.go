@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	proto "github.com/ryarnyah/mood-tracker/proto"
@@ -23,10 +24,14 @@ func (m *moodServer) GetMoodFromEntry(ctx context.Context, request *proto.GetMoo
 	var title string
 	var content string
 
+	now := time.Now()
+	year, month, day := now.Date()
+	today := time.Date(year, month, day, 0, 0, 0, 0, now.Location())
+
 	err := m.db.QueryRowContext(ctx, `SELECT MOOD.TITLE, MOOD.CONTENT
           FROM MOOD JOIN ENTRY ON MOOD.MOOD_ID = ENTRY.MOOD_ID
           LEFT JOIN RECORD ON ENTRY.ENTRY_ID = RECORD.ENTRY_ID
-          WHERE ENTRY.MOOD_ID = ? AND ENTRY.ENTRY_ACCESS_CODE = ? AND RECORD.ENTRY_ID IS NULL`, request.GetMoodId(), request.GetEntryAccessCode()).Scan(&title, &content)
+          WHERE ENTRY.MOOD_ID = ? AND ENTRY.ENTRY_ACCESS_CODE = ? AND (RECORD.ENTRY_ID IS NULL OR RECORD.RECORD_DATETIME <> ?)`, request.GetMoodId(), request.GetEntryAccessCode(), today).Scan(&title, &content)
 
 	if err != nil {
 		return nil, err
@@ -45,22 +50,26 @@ func (m *moodServer) AddEntry(ctx context.Context, request *proto.AddEntryReques
 	}
 	defer tx.Rollback()
 
+	now := time.Now()
+	year, month, day := now.Date()
+	today := time.Date(year, month, day, 0, 0, 0, 0, now.Location())
+
 	var entryID int
 	err = tx.QueryRowContext(ctx, `SELECT ENTRY.ENTRY_ID
           FROM ENTRY LEFT JOIN RECORD ON ENTRY.ENTRY_ID = RECORD.ENTRY_ID
-          WHERE ENTRY.MOOD_ID = ? AND ENTRY.ENTRY_ACCESS_CODE = ? AND RECORD.ENTRY_ID IS NULL`, request.GetMoodId(), request.GetEntryAccessCode()).Scan(&entryID)
+          WHERE ENTRY.MOOD_ID = ? AND ENTRY.ENTRY_ACCESS_CODE = ? AND (RECORD.ENTRY_ID IS NULL OR RECORD.RECORD_DATETIME <> ?)`, request.GetMoodId(), request.GetEntryAccessCode(), today).Scan(&entryID)
 	if err == sql.ErrNoRows {
 		return nil, errors.New("access-code or mood-id is invalid or expired")
 	} else if err != nil {
 		return nil, err
 	}
 
-	updateEntry, err := tx.Prepare("INSERT INTO RECORD (ENTRY_ID, RECORD, COMMENT) VALUES (?, ?, ?)")
+	updateEntry, err := tx.Prepare("INSERT INTO RECORD (ENTRY_ID, RECORD, COMMENT, RECORD_DATETIME) VALUES (?, ?, ?, ?)")
 	if err != nil {
 		return nil, err
 	}
 	defer updateEntry.Close()
-	_, err = updateEntry.Exec(entryID, request.GetEntry().GetRecord(), request.GetEntry().GetComment())
+	_, err = updateEntry.Exec(entryID, request.GetEntry().GetRecord(), request.GetEntry().GetComment(), today)
 	if err != nil {
 		return nil, err
 	}
