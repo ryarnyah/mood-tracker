@@ -1,5 +1,5 @@
 <template>
-  <div>
+    <div>
       <form novalidate class="md-layout md-alignment-top-center" @submit.prevent="validateForm">
           <md-card class="md-layout-item md-size-50 md-small-size-100">
               <md-card-header>
@@ -10,7 +10,7 @@
                       <div class="md-layout-item md-small-size-100">
                           <md-field :class="getValidationClass('title')">
                               <label for="title">Title</label>
-                              <md-input name="title" id="title" v-model="form.title" :disabled="sending" maxlength="128" />
+                              <md-input name="title" id="title" v-model="form.title" :disabled="sending" maxlength="128" required />
                               <span class="md-error" v-if="!$v.form.title.required">The title is required</span>
                               <span class="md-error" v-else-if="!$v.form.title.minlength">Invalid title</span>
                               <span class="md-error" v-else-if="!$v.form.title.maxlength">Invalid title</span>
@@ -29,10 +29,24 @@
                   <div>
                       <div class="md-layout-item md-small-size-100">
                           <md-field :class="getValidationClass('numberOfEntries')">
-                              <label for="numberOfEntries">Number of answer needed</label>
+                              <label for="numberOfEntries">Number of answer to create without email</label>
                               <md-input name="numberOfEntries" id="numberOfEntries" v-model="form.numberOfEntries" :disabled="sending" />
-                              <span class="md-error" v-if="!$v.form.numberOfEntries.required">The Number of entries is required</span>
-                              <span class="md-error" v-else-if="!$v.form.numberOfEntries.beetween">Invalid content</span>
+                              <span class="md-error" v-if="!$v.form.numberOfEntries.beetween">Invalid content</span>
+                          </md-field>
+                      </div>
+                  </div>
+                  <div>
+                      <div class="md-layout-item md-small-size-100">
+                          <md-field :class="getValidationClass('emails')" v-for="(email, index) in $v.form.emails.$each.$iter" :key="index">
+                              <label for="email">Email</label>
+                              <md-input name="email" v-model="email.content.$model" :disabled="sending" type="email" required />
+                              <div v-on:click="addEmail()" class="md-icon md-icon-font md-theme-default">
+                                  &oplus;
+                              </div>
+                              <div v-on:click="deleteEmail(index)" class="md-icon md-icon-font md-theme-default">
+                                  &otimes;
+                              </div>
+                              <span class="md-error" v-if="!email.content.email">Must be a valid email</span>
                           </md-field>
                       </div>
                   </div>
@@ -56,7 +70,7 @@
                           <md-table-cell md-numeric><a v-bind:href="moodUrl">{{ moodUrl }}</a></md-table-cell>
                       </md-table-row>
                   </md-table>
-                  <md-table>
+                  <md-table v-if="entriesAccessCodesList.length > 0">
                       <md-table-row>
                           <md-table-head md-numeric>Entries URLs</md-table-head>
                       </md-table-row>
@@ -80,7 +94,8 @@ import {
     required,
     minLength,
     maxLength,
-    between
+    between,
+    email
   } from 'vuelidate/lib/validators';
 
 export default {
@@ -95,7 +110,10 @@ export default {
       form: {
           title: null,
           content: null,
-          numberOfEntries: null
+          numberOfEntries: null,
+          emails: [{
+              content: null
+          }]
       },
       sending: false,
       moodSaved: false,
@@ -108,6 +126,13 @@ export default {
     }),
     validations: {
       form: {
+          emails: {
+              $each: {
+                  content: {
+                      email
+                  }
+              }
+          },
         title: {
             required,
             minLength: minLength(1),
@@ -118,12 +143,23 @@ export default {
             maxLength: maxLength(512)
         },
         numberOfEntries: {
-            required,
             between: between(1, 20)
         }
       }
     },
     methods: {
+      addEmail() {
+          this.form.emails.push({
+              content: null
+          })
+      },
+      deleteEmail(index) {
+          if (this.form.emails.length != 1) {
+             if (index > -1) {
+               this.form.emails.splice(index, 1);
+             }
+          }
+      },
       entryUrl(entryAccessCode) {
           return window.location.protocol + '//' + window.location.host + '/entry/' + this.moodId + '/' + entryAccessCode;
       },
@@ -136,12 +172,22 @@ export default {
           }
         }
       },
+      getEmails () {
+         var emails = [];
+          for (const e of this.form.emails){
+              if (e.content != null && e.content !== "") {
+                  emails.push(e.content);
+              }
+          }
+          return emails;
+      },
       saveMood () {
           this.sending = true;
           let request = new CreateMoodRequest();
           request.setTitle(this.form.title);
           request.setContent(this.form.content);
           request.setNumberOfRecordsNeeded(this.form.numberOfEntries);
+          request.setEmailsList(this.getEmails())
 
           let v = this;
           grpc.unary(Mood.CreateMood, {

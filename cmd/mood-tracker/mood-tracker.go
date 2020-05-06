@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"flag"
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -38,6 +42,14 @@ var (
 	tlsKeyFilePath  = flag.String("tls-key-file", "server.key", "Path to the private key file.")
 	host            = flag.String("host", "localhost:8090", "Server host.")
 
+	// SMTP parameters
+	smtpHost        = flag.String("smtp-host", "", "SMTP Server host")
+	smtpPort        = flag.Int("smtp-port", 587, "SMTP Server host port")
+	smtpSenderEmail = flag.String("smt-sender-email", "root@localhost", "SMTP email from")
+	smtpExternalUrl = flag.String("smtp-external-url", "localhost:8090", "Public URL or mood tracker")
+	smtpUsername    = flag.String("smtp-username", "", "SMTP username (if needed)")
+	smtpPassword    = flag.String("smtp-password", "", "SMTP password (if needed)")
+
 	profiling     = flag.Bool("profiling-enable", false, "Enable profiling")
 	profilingHost = flag.String("profiling-host", "localhost:6060", "HTTP profiling host:port")
 	v             = flag.Bool("version", false, "Print version")
@@ -45,12 +57,36 @@ var (
 
 const (
 	// BANNER for usage.
-	BANNER = `
+	BANNER = `___  ___                _      _____              _
+|  \/  |               | |    |_   _|            | |
+| .  . | ___   ___   __| |______| |_ __ __ _  ___| | _____ _ __
+| |\/| |/ _ \ / _ \ / _` + "`" + ` |______| | '__/ _` + "`" + ` |/ __| |/ / _ \ '__|
+| |  | | (_) | (_) | (_| |      | | | | (_| | (__|   <  __/ |
+\_|  |_/\___/ \___/ \__,_|      \_/_|  \__,_|\___|_|\_\___|_|
+
  Get your mood ready.
  Version: %s
  Build: %s
 `
 )
+
+func installSignalHandler(stopChs ...chan interface{}) *sync.WaitGroup {
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	// Block until a signal is received.
+	go func() {
+		defer wg.Done()
+		sig := <-c
+		for _, stopCh := range stopChs {
+			close(stopCh)
+		}
+		glog.Infof("Exiting given signal: %v", sig)
+	}()
+	return &wg
+}
 
 func main() {
 
@@ -150,18 +186,37 @@ func main() {
 		http.ServeContent(w, r, "index.html", time.Now(), f)
 	})
 
+	stopCh := make(chan interface{})
+	installSignalHandler(stopCh)
+
+	var wg sync.WaitGroup
+
+	smtpDbPoller := server.NewSmtpDbPoller(db, *smtpHost, *smtpPort, *smtpUsername, *smtpPassword, *smtpSenderEmail, *smtpExternalUrl)
+	smtpDbPoller.Start(&wg, stopCh)
+
 	httpServer := http.Server{
 		Addr:    *host,
 		Handler: r,
 	}
 
-	if *enableTLS {
-		if err := httpServer.ListenAndServeTLS(*tlsCertFilePath, *tlsKeyFilePath); err != nil {
-			glog.Fatalf("failed starting http2 server: %v", err)
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if *enableTLS {
+			if err := httpServer.ListenAndServeTLS(*tlsCertFilePath, *tlsKeyFilePath); err != nil && err != http.ErrServerClosed {
+				glog.Fatalf("failed starting http2 server: %v", err)
+			}
+		} else {
+			if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+				glog.Fatalf("failed starting http server: %v", err)
+			}
 		}
-	} else {
-		if err := httpServer.ListenAndServe(); err != nil {
-			glog.Fatalf("failed starting http server: %v", err)
-		}
+	}()
+	<-stopCh
+
+	err = httpServer.Shutdown(context.Background())
+	if err != nil {
+		glog.Error(err)
 	}
+	wg.Wait()
 }
