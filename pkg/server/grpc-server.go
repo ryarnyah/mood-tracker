@@ -173,6 +173,12 @@ func (m *moodServer) GetMood(ctx context.Context, request *proto.GetMoodRequest)
 }
 
 func (m *moodServer) CreateMood(ctx context.Context, request *proto.CreateMoodRequest) (*proto.CreateMoodResponse, error) {
+	if request.GetNumberOfRecordsNeeded() == uint32(0) {
+		if len(request.GetEmails()) == 0 {
+			return nil, errors.New("number of records needed or emails is mandatory")
+		}
+	}
+
 	tx, err := m.db.Begin()
 	if err != nil {
 		return nil, err
@@ -214,6 +220,27 @@ func (m *moodServer) CreateMood(ctx context.Context, request *proto.CreateMoodRe
 			return nil, err
 		}
 		recordsAccessCodes = append(recordsAccessCodes, entryUUID.String())
+	}
+
+	mailStmt, err := tx.Prepare("INSERT INTO MAIL (ENTRY_ID, EMAIL) VALUES (?, ?)")
+	if err != nil {
+		return nil, err
+	}
+	defer mailStmt.Close()
+	for _, email := range request.GetEmails() {
+		entryUUID := uuid.New()
+		e, err := entryStmt.Exec(entryUUID.String(), moodID)
+		if err != nil {
+			return nil, err
+		}
+		entryId, err := e.LastInsertId()
+		if err != nil {
+			return nil, err
+		}
+		_, err = mailStmt.Exec(entryId, email)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	err = tx.Commit()

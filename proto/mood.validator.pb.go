@@ -159,6 +159,9 @@ func (this *GetMoodResponse) Validate() error {
 	}
 	return nil
 }
+
+var _regex_CreateMoodRequest_Emails = regexp.MustCompile(`^[a-zA-Z0-9.!#$%%&'*+/=?^_{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$`)
+
 func (this *CreateMoodRequest) Validate() error {
 	if this.Title == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Title", fmt.Errorf(`value '%v' must not be an empty string`, this.Title))
@@ -169,11 +172,19 @@ func (this *CreateMoodRequest) Validate() error {
 	if !(len(this.Content) < 513) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Content", fmt.Errorf(`value '%v' must have a length smaller than '513'`, this.Content))
 	}
-	if !(this.NumberOfRecordsNeeded > 0) {
-		return github_com_mwitkow_go_proto_validators.FieldError("NumberOfRecordsNeeded", fmt.Errorf(`value '%v' must be greater than '0'`, this.NumberOfRecordsNeeded))
-	}
 	if !(this.NumberOfRecordsNeeded < 21) {
 		return github_com_mwitkow_go_proto_validators.FieldError("NumberOfRecordsNeeded", fmt.Errorf(`value '%v' must be less than '21'`, this.NumberOfRecordsNeeded))
+	}
+	if len(this.Emails) > 20 {
+		return github_com_mwitkow_go_proto_validators.FieldError("Emails", fmt.Errorf(`value '%v' must contain at most 20 elements`, this.Emails))
+	}
+	for _, item := range this.Emails {
+		if !_regex_CreateMoodRequest_Emails.MatchString(item) {
+			return github_com_mwitkow_go_proto_validators.FieldError("Emails", fmt.Errorf(`value '%v' must be a string conforming to regex "^[a-zA-Z0-9.!#$%%&'*+/=?^_{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$"`, item))
+		}
+		if item == "" {
+			return github_com_mwitkow_go_proto_validators.FieldError("Emails", fmt.Errorf(`value '%v' must not be an empty string`, item))
+		}
 	}
 	return nil
 }

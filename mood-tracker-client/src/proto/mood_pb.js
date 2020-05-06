@@ -249,7 +249,7 @@ if (goog.DEBUG && !COMPILED) {
  * @constructor
  */
 proto.CreateMoodRequest = function(opt_data) {
-  jspb.Message.initialize(this, opt_data, 0, -1, null, null);
+  jspb.Message.initialize(this, opt_data, 0, -1, proto.CreateMoodRequest.repeatedFields_, null);
 };
 goog.inherits(proto.CreateMoodRequest, jspb.Message);
 if (goog.DEBUG && !COMPILED) {
@@ -2088,6 +2088,13 @@ proto.GetMoodResponse.prototype.clearStatsList = function() {
 
 
 
+/**
+ * List of repeated fields within this message type.
+ * @private {!Array<number>}
+ * @const
+ */
+proto.CreateMoodRequest.repeatedFields_ = [4];
+
 
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
@@ -2121,7 +2128,8 @@ proto.CreateMoodRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
     title: jspb.Message.getFieldWithDefault(msg, 1, ""),
     content: jspb.Message.getFieldWithDefault(msg, 2, ""),
-    numberOfRecordsNeeded: jspb.Message.getFieldWithDefault(msg, 3, 0)
+    numberOfRecordsNeeded: jspb.Message.getFieldWithDefault(msg, 3, 0),
+    emailsList: (f = jspb.Message.getRepeatedField(msg, 4)) == null ? undefined : f
   };
 
   if (includeInstance) {
@@ -2170,6 +2178,10 @@ proto.CreateMoodRequest.deserializeBinaryFromReader = function(msg, reader) {
       var value = /** @type {number} */ (reader.readUint32());
       msg.setNumberOfRecordsNeeded(value);
       break;
+    case 4:
+      var value = /** @type {string} */ (reader.readString());
+      msg.addEmails(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -2217,6 +2229,13 @@ proto.CreateMoodRequest.serializeBinaryToWriter = function(message, writer) {
   if (f !== 0) {
     writer.writeUint32(
       3,
+      f
+    );
+  }
+  f = message.getEmailsList();
+  if (f.length > 0) {
+    writer.writeRepeatedString(
+      4,
       f
     );
   }
@@ -2274,6 +2293,43 @@ proto.CreateMoodRequest.prototype.getNumberOfRecordsNeeded = function() {
  */
 proto.CreateMoodRequest.prototype.setNumberOfRecordsNeeded = function(value) {
   return jspb.Message.setProto3IntField(this, 3, value);
+};
+
+
+/**
+ * repeated string emails = 4;
+ * @return {!Array<string>}
+ */
+proto.CreateMoodRequest.prototype.getEmailsList = function() {
+  return /** @type {!Array<string>} */ (jspb.Message.getRepeatedField(this, 4));
+};
+
+
+/**
+ * @param {!Array<string>} value
+ * @return {!proto.CreateMoodRequest} returns this
+ */
+proto.CreateMoodRequest.prototype.setEmailsList = function(value) {
+  return jspb.Message.setField(this, 4, value || []);
+};
+
+
+/**
+ * @param {string} value
+ * @param {number=} opt_index
+ * @return {!proto.CreateMoodRequest} returns this
+ */
+proto.CreateMoodRequest.prototype.addEmails = function(value, opt_index) {
+  return jspb.Message.addToRepeatedField(this, 4, value, opt_index);
+};
+
+
+/**
+ * Clears the list making it empty but non-null.
+ * @return {!proto.CreateMoodRequest} returns this
+ */
+proto.CreateMoodRequest.prototype.clearEmailsList = function() {
+  return this.setEmailsList([]);
 };
 
 

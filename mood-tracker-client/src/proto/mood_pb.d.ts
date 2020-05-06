@@ -274,6 +274,11 @@ export class CreateMoodRequest extends jspb.Message {
   getNumberOfRecordsNeeded(): number;
   setNumberOfRecordsNeeded(value: number): void;
 
+  clearEmailsList(): void;
+  getEmailsList(): Array<string>;
+  setEmailsList(value: Array<string>): void;
+  addEmails(value: string, index?: number): string;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateMoodRequest.AsObject;
   static toObject(includeInstance: boolean, msg: CreateMoodRequest): CreateMoodRequest.AsObject;
@@ -289,6 +294,7 @@ export namespace CreateMoodRequest {
     title: string,
     content: string,
     numberOfRecordsNeeded: number,
+    emailsList: Array<string>,
   }
 }
 
