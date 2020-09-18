@@ -27,6 +27,7 @@ script:
   - make release
 deploy:
   - provider: releases
+    skip_cleanup: true
     token:
       secure: "BBmm3VSDxvaqkmjaPCIB6uEAd4mPdXdUpVjw/zg7kStbFCxdiKyCOtyyFDufNnXYSCKKMeCi12uBAU/3dDKLQLpJu671+theiLNrA2a4o1veTeCiVJNiyPDQwaoAcbv+HqshpqxwQkrAJ2OAuzBqp8ei4b/YdmBN5c927HC2UwRDOn9bV8JbC19S1ZbOuMMU9sIKiCq93ORxSJqUS0T1OF9g2uYU7QMqsr/caifHEvDLWCgY/KtkNL0xFbzuk50HVWkU1gJbHiRZMgo02b1zcgZuY+fbdtqbZWK/IvfSCjyeJs/nTqkLRnyF/84ewHBj+K3ku3Hy84ddXISAB+ATOrbkkoJEWA74x5PVyKg84ziSUbl3v5MVDwuFSt4FuHaRj83sfowLiqEvfMCLBa3AsPmonrYnMwclArgXDoxW9Uq5IlntK2m+i5xRzNGKShHowq3TPQmQpkQH2Fklh94nhhu+4da/Y6Me6dpbY9pjN4Ezh2nz9y973O4UWDWukKcrW4t/eUcXlZYS1WgFgTSBlFucYo3Gi7wMSP0S1hQ0J5UprDd8FHT5vmmHj8v3+tWD+G8gLtvd9omRNiCNsM0xj/56toPnv6uM2puxlAvkoH9IrR2dMcZ325Yrx4KkBupVt047jKVWJZxSbS4D2ml3j8jXnTUHF5gBiN5oSTWMOzQ="
     file:
@@ -36,11 +37,10 @@ deploy:
       - build/mood-tracker-linux-386.md5
       - build/mood-tracker-linux-386.sha256
       - build/mood-tracker-linux-386
-    cleanup: false
     on:
       tags: true
   - provider: script
-    cleanup: false
+    skip_cleanup: true
     script: bash deploy/deploy.sh
     on:
       tags: true
