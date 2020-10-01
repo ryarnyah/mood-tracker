@@ -6,10 +6,10 @@ Some web-grpc mood tracker to track your team mood anonymously :D
 
 #### Binaries ####
 
-- **linux** [amd64](https://github.com/ryarnyah/mood-tracker/releases/download/0.0.4/mood-tracker-linux-amd64) [386](https://github.com/ryarnyah/mood-tracker/releases/download/0.0.4/mood-tracker-linux-386)
+- **linux** [amd64](https://github.com/ryarnyah/mood-tracker/releases/download/0.0.5/mood-tracker-linux-amd64) [386](https://github.com/ryarnyah/mood-tracker/releases/download/0.0.5/mood-tracker-linux-386)
 
 ```bash
-sudo curl -L https://github.com/ryarnyah/mood-tracker/releases/download/0.0.4/mood-tracker-linux-amd64 -o /usr/local/bin/mood-tracker && sudo chmod +x /usr/local/bin/mood-tracker
+sudo curl -L https://github.com/ryarnyah/mood-tracker/releases/download/0.0.5/mood-tracker-linux-amd64 -o /usr/local/bin/mood-tracker && sudo chmod +x /usr/local/bin/mood-tracker
 ```
 
 #### Via Go ####
@@ -30,7 +30,7 @@ $ make
 #### Running with Docker ####
 
 ```bash
-docker run ryarnyah/mood-tracker-linux-amd64:0.0.4 <option>
+docker run ryarnyah/mood-tracker-linux-amd64:0.0.5 <option>
 ```
 
 ## Usage ##
