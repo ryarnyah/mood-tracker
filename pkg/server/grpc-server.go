@@ -45,7 +45,7 @@ func (m *moodServer) GetMoodFromEntry(ctx context.Context, request *proto.GetMoo
 }
 
 func (m *moodServer) AddEntry(ctx context.Context, request *proto.AddEntryRequest) (*proto.AddEntryResponse, error) {
-	tx, err := m.db.Begin()
+	tx, err := m.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -65,12 +65,12 @@ func (m *moodServer) AddEntry(ctx context.Context, request *proto.AddEntryReques
 		return nil, err
 	}
 
-	updateEntry, err := tx.Prepare("INSERT INTO RECORD (ENTRY_ID, RECORD, COMMENT, RECORD_DATETIME) VALUES (?, ?, ?, ?)")
+	updateEntry, err := tx.PrepareContext(ctx, "INSERT INTO RECORD (ENTRY_ID, RECORD, COMMENT, RECORD_DATETIME) VALUES (?, ?, ?, ?)")
 	if err != nil {
 		return nil, err
 	}
 	defer updateEntry.Close()
-	_, err = updateEntry.Exec(entryID, request.GetEntry().GetRecord(), request.GetEntry().GetComment(), today)
+	_, err = updateEntry.ExecContext(ctx, entryID, request.GetEntry().GetRecord(), request.GetEntry().GetComment(), today)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +83,7 @@ func (m *moodServer) AddEntry(ctx context.Context, request *proto.AddEntryReques
 	return &proto.AddEntryResponse{}, nil
 }
 func (m *moodServer) GetMood(ctx context.Context, request *proto.GetMoodRequest) (*proto.GetMoodResponse, error) {
-	rows, err := m.db.Query(`SELECT RECORD.RECORD, RECORD.COMMENT, RECORD.RECORD_DATETIME
+	rows, err := m.db.QueryContext(ctx, `SELECT RECORD.RECORD, RECORD.COMMENT, RECORD.RECORD_DATETIME
           FROM RECORD JOIN ENTRY ON RECORD.ENTRY_ID = ENTRY.ENTRY_ID
           JOIN MOOD ON MOOD.MOOD_ID = ENTRY.MOOD_ID
           WHERE MOOD.MOOD_ID = ? AND MOOD.MOOD_ACCESS_CODE = ?
@@ -111,7 +111,7 @@ func (m *moodServer) GetMood(ctx context.Context, request *proto.GetMoodRequest)
 			RecordEntry: t,
 		})
 	}
-	statRows, err := m.db.Query(`SELECT RECORD.RECORD, RECORD.RECORD_DATETIME, COUNT(1)
+	statRows, err := m.db.QueryContext(ctx, `SELECT RECORD.RECORD, RECORD.RECORD_DATETIME, COUNT(1)
           FROM ENTRY
           JOIN RECORD ON RECORD.ENTRY_ID = ENTRY.ENTRY_ID
           JOIN MOOD ON MOOD.MOOD_ID = ENTRY.MOOD_ID
@@ -179,7 +179,7 @@ func (m *moodServer) CreateMood(ctx context.Context, request *proto.CreateMoodRe
 		}
 	}
 
-	tx, err := m.db.Begin()
+	tx, err := m.db.BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -188,13 +188,13 @@ func (m *moodServer) CreateMood(ctx context.Context, request *proto.CreateMoodRe
 	moodUUID := uuid.New()
 
 	// Create mood entry
-	moodStmt, err := tx.Prepare("INSERT INTO MOOD (MOOD_ACCESS_CODE, TITLE, CONTENT) VALUES (?, ?, ?)")
+	moodStmt, err := tx.PrepareContext(ctx, "INSERT INTO MOOD (MOOD_ACCESS_CODE, TITLE, CONTENT) VALUES (?, ?, ?)")
 	if err != nil {
 		return nil, err
 	}
 	defer moodStmt.Close()
 
-	r, err := moodStmt.Exec(moodUUID.String(), request.GetTitle(), request.GetContent())
+	r, err := moodStmt.ExecContext(ctx, moodUUID.String(), request.GetTitle(), request.GetContent())
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +205,7 @@ func (m *moodServer) CreateMood(ctx context.Context, request *proto.CreateMoodRe
 	}
 
 	// Create entry entries
-	entryStmt, err := tx.Prepare("INSERT INTO ENTRY (ENTRY_ACCESS_CODE, MOOD_ID) VALUES (?, ?)")
+	entryStmt, err := tx.PrepareContext(ctx, "INSERT INTO ENTRY (ENTRY_ACCESS_CODE, MOOD_ID) VALUES (?, ?)")
 	if err != nil {
 		return nil, err
 	}
@@ -215,21 +215,21 @@ func (m *moodServer) CreateMood(ctx context.Context, request *proto.CreateMoodRe
 	var i uint32
 	for i = 0; i < request.GetNumberOfRecordsNeeded(); i++ {
 		entryUUID := uuid.New()
-		_, err = entryStmt.Exec(entryUUID.String(), moodID)
+		_, err = entryStmt.ExecContext(ctx, entryUUID.String(), moodID)
 		if err != nil {
 			return nil, err
 		}
 		recordsAccessCodes = append(recordsAccessCodes, entryUUID.String())
 	}
 
-	mailStmt, err := tx.Prepare("INSERT INTO MAIL (ENTRY_ID, EMAIL) VALUES (?, ?)")
+	mailStmt, err := tx.PrepareContext(ctx, "INSERT INTO MAIL (ENTRY_ID, EMAIL) VALUES (?, ?)")
 	if err != nil {
 		return nil, err
 	}
 	defer mailStmt.Close()
 	for _, email := range request.GetEmails() {
 		entryUUID := uuid.New()
-		e, err := entryStmt.Exec(entryUUID.String(), moodID)
+		e, err := entryStmt.ExecContext(ctx, entryUUID.String(), moodID)
 		if err != nil {
 			return nil, err
 		}
@@ -237,7 +237,7 @@ func (m *moodServer) CreateMood(ctx context.Context, request *proto.CreateMoodRe
 		if err != nil {
 			return nil, err
 		}
-		_, err = mailStmt.Exec(entryId, email)
+		_, err = mailStmt.ExecContext(ctx, entryId, email)
 		if err != nil {
 			return nil, err
 		}
