@@ -103,7 +103,7 @@ export default {
     mixins: [validationMixin],
     computed: {
         moodUrl: function() {
-            return window.location.protocol + '//' + window.location.host + '/mood/' + this.moodId + '/' + this.moodAccessCode;
+            return window.location.protocol + '//' + window.location.host + '/mood/' + this.moodId + '/' + this.moodSignature;
         }
     },
     data: () => ({
@@ -120,6 +120,7 @@ export default {
       moodHasData: false,
       entriesAccessCodesList: null,
       moodId: null,
+      moodSignature: null,
       moodAccessCode: null,
       showError: false,
       errorMessage: null
@@ -160,13 +161,13 @@ export default {
              }
           }
       },
-      entryUrl(entryAccessCode) {
-          return window.location.protocol + '//' + window.location.host + '/entry/' + this.moodId + '/' + entryAccessCode;
+      entryUrl(entry) {
+                return window.location.protocol + '//' + window.location.host + '/entry/' + this.moodId + '/' + entry.getEntryId() + '/' + entry.getEntrySignature();
       },
-      getValidationClass (fieldName) {
-        const field = this.$v.form[fieldName]
+        getValidationClass (fieldName) {
+            const field = this.$v.form[fieldName]
 
-        if (field) {
+            if (field) {
           return {
             'md-invalid': field.$invalid && field.$dirty
           }
@@ -196,9 +197,9 @@ export default {
               onEnd: function(res) {
                   const { status, statusMessage, message } = res;
                   if (status === grpc.Code.OK && message) {
-                      v.entriesAccessCodesList = message.getEntriesAccessCodesList();
+                      v.entriesAccessCodesList = message.getEntriesIdsList();
                       v.moodId = message.getMoodId();
-                      v.moodAccessCode = message.getMoodAccessCode();
+                      v.moodSignature = message.getMoodSignature();
                       v.moodSaved = true;
                       v.moodHasData = true;
                   } else if (status !== grpc.Code.OK) {

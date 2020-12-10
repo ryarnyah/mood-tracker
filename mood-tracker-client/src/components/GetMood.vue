@@ -62,7 +62,7 @@ export default {
     name: 'GetMood',
     props: [
         'moodId',
-        'moodAccessCode'
+        'moodSignature'
     ],
     components: {
         MoodStatChart,
@@ -123,7 +123,7 @@ export default {
       getMood () {
         let request = new GetMoodRequest();
         request.setMoodId(this.moodId);
-        request.setMoodAccessCode(this.moodAccessCode);
+        request.setMoodSignature(this.moodSignature);
 
         let v = this;
         grpc.unary(Mood.GetMood, {

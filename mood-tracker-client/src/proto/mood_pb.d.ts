@@ -64,11 +64,14 @@ export class AddEntryRequest extends jspb.Message {
   getEntry(): Entry | undefined;
   setEntry(value?: Entry): void;
 
-  getMoodId(): number;
-  setMoodId(value: number): void;
+  getMoodId(): string;
+  setMoodId(value: string): void;
 
-  getEntryAccessCode(): string;
-  setEntryAccessCode(value: string): void;
+  getEntryId(): string;
+  setEntryId(value: string): void;
+
+  getEntrySignature(): string;
+  setEntrySignature(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): AddEntryRequest.AsObject;
@@ -83,8 +86,9 @@ export class AddEntryRequest extends jspb.Message {
 export namespace AddEntryRequest {
   export type AsObject = {
     entry?: Entry.AsObject,
-    moodId: number,
-    entryAccessCode: string,
+    moodId: string,
+    entryId: string,
+    entrySignature: string,
   }
 }
 
@@ -105,11 +109,14 @@ export namespace AddEntryResponse {
 }
 
 export class GetMoodFromEntryRequest extends jspb.Message {
-  getMoodId(): number;
-  setMoodId(value: number): void;
+  getMoodId(): string;
+  setMoodId(value: string): void;
 
-  getEntryAccessCode(): string;
-  setEntryAccessCode(value: string): void;
+  getEntryId(): string;
+  setEntryId(value: string): void;
+
+  getEntrySignature(): string;
+  setEntrySignature(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetMoodFromEntryRequest.AsObject;
@@ -123,8 +130,9 @@ export class GetMoodFromEntryRequest extends jspb.Message {
 
 export namespace GetMoodFromEntryRequest {
   export type AsObject = {
-    moodId: number,
-    entryAccessCode: string,
+    moodId: string,
+    entryId: string,
+    entrySignature: string,
   }
 }
 
@@ -153,11 +161,11 @@ export namespace GetMoodFromEntryResponse {
 }
 
 export class GetMoodRequest extends jspb.Message {
-  getMoodId(): number;
-  setMoodId(value: number): void;
+  getMoodId(): string;
+  setMoodId(value: string): void;
 
-  getMoodAccessCode(): string;
-  setMoodAccessCode(value: string): void;
+  getMoodSignature(): string;
+  setMoodSignature(value: string): void;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): GetMoodRequest.AsObject;
@@ -171,8 +179,8 @@ export class GetMoodRequest extends jspb.Message {
 
 export namespace GetMoodRequest {
   export type AsObject = {
-    moodId: number,
-    moodAccessCode: string,
+    moodId: string,
+    moodSignature: string,
   }
 }
 
@@ -298,17 +306,41 @@ export namespace CreateMoodRequest {
   }
 }
 
+export class EntrySigned extends jspb.Message {
+  getEntryId(): string;
+  setEntryId(value: string): void;
+
+  getEntrySignature(): string;
+  setEntrySignature(value: string): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): EntrySigned.AsObject;
+  static toObject(includeInstance: boolean, msg: EntrySigned): EntrySigned.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: EntrySigned, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): EntrySigned;
+  static deserializeBinaryFromReader(message: EntrySigned, reader: jspb.BinaryReader): EntrySigned;
+}
+
+export namespace EntrySigned {
+  export type AsObject = {
+    entryId: string,
+    entrySignature: string,
+  }
+}
+
 export class CreateMoodResponse extends jspb.Message {
-  getMoodId(): number;
-  setMoodId(value: number): void;
+  getMoodId(): string;
+  setMoodId(value: string): void;
 
-  getMoodAccessCode(): string;
-  setMoodAccessCode(value: string): void;
+  getMoodSignature(): string;
+  setMoodSignature(value: string): void;
 
-  clearEntriesAccessCodesList(): void;
-  getEntriesAccessCodesList(): Array<string>;
-  setEntriesAccessCodesList(value: Array<string>): void;
-  addEntriesAccessCodes(value: string, index?: number): string;
+  clearEntriesIdsList(): void;
+  getEntriesIdsList(): Array<EntrySigned>;
+  setEntriesIdsList(value: Array<EntrySigned>): void;
+  addEntriesIds(value?: EntrySigned, index?: number): EntrySigned;
 
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): CreateMoodResponse.AsObject;
@@ -322,9 +354,9 @@ export class CreateMoodResponse extends jspb.Message {
 
 export namespace CreateMoodResponse {
   export type AsObject = {
-    moodId: number,
-    moodAccessCode: string,
-    entriesAccessCodesList: Array<string>,
+    moodId: string,
+    moodSignature: string,
+    entriesIdsList: Array<EntrySigned.AsObject>,
   }
 }
 

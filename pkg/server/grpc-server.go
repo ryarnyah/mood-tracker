@@ -2,13 +2,17 @@ package server
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/rand"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
 	"errors"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
-	"github.com/google/uuid"
 	proto "github.com/ryarnyah/mood-tracker/proto"
+	"github.com/segmentio/ksuid"
 )
 
 type moodServer struct {
@@ -21,18 +25,55 @@ func NewMoodServer(db *sql.DB) proto.MoodServer {
 	}
 }
 
+func checkSignedData(signKey, data, expectedSignature string) error {
+	// Check sign key
+	randomKey, err := hex.DecodeString(signKey)
+	if err != nil {
+		return err
+	}
+	signature, err := hex.DecodeString(expectedSignature)
+	if err != nil {
+		return err
+	}
+	moodSigner := hmac.New(sha256.New, randomKey)
+	_, err = moodSigner.Write([]byte(data))
+	if err != nil {
+		return err
+	}
+	moodIdSigned := moodSigner.Sum(nil)
+
+	if !hmac.Equal(moodIdSigned, signature) {
+		return errors.New("signature mismatch")
+	}
+
+	return nil
+}
+
 func (m *moodServer) GetMoodFromEntry(ctx context.Context, request *proto.GetMoodFromEntryRequest) (*proto.GetMoodFromEntryResponse, error) {
 	var title string
 	var content string
+	var signKey string
+
+	err := m.db.QueryRowContext(ctx, `SELECT MOOD.SIGN_KEY
+          FROM MOOD
+          WHERE MOOD.MOOD_ID = ?`, request.GetMoodId()).Scan(&signKey)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = checkSignedData(signKey, request.GetMoodId()+request.GetEntryId(), request.GetEntrySignature()); err != nil {
+		return nil, err
+	}
 
 	now := time.Now()
 	year, month, day := now.Date()
 	today := time.Date(year, month, day, 0, 0, 0, 0, now.Location())
 
-	err := m.db.QueryRowContext(ctx, `SELECT MOOD.TITLE, MOOD.CONTENT
+	err = m.db.QueryRowContext(ctx, `SELECT MOOD.TITLE, MOOD.CONTENT, MOOD.SIGN_KEY
           FROM MOOD JOIN ENTRY ON MOOD.MOOD_ID = ENTRY.MOOD_ID
           LEFT JOIN RECORD ON ENTRY.ENTRY_ID = RECORD.ENTRY_ID
-          WHERE ENTRY.MOOD_ID = ? AND ENTRY.ENTRY_ACCESS_CODE = ? AND (RECORD.ENTRY_ID IS NULL OR RECORD.RECORD_DATETIME <> ?)`, request.GetMoodId(), request.GetEntryAccessCode(), today).Scan(&title, &content)
+          WHERE ENTRY.MOOD_ID = ? AND ENTRY.ENTRY_ID = ? AND (RECORD.ENTRY_ID IS NULL OR RECORD.RECORD_DATETIME <> ?)`,
+		request.GetMoodId(), request.GetEntryId(), today).Scan(&title, &content, &signKey)
 
 	if err != nil {
 		return nil, err
@@ -55,12 +96,24 @@ func (m *moodServer) AddEntry(ctx context.Context, request *proto.AddEntryReques
 	year, month, day := now.Date()
 	today := time.Date(year, month, day, 0, 0, 0, 0, now.Location())
 
-	var entryID int
+	var signKey string
+	err = m.db.QueryRowContext(ctx, `SELECT MOOD.SIGN_KEY
+          FROM MOOD
+          WHERE MOOD.MOOD_ID = ?`, request.GetMoodId()).Scan(&signKey)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = checkSignedData(signKey, request.GetMoodId()+request.GetEntryId(), request.GetEntrySignature()); err != nil {
+		return nil, err
+	}
+
+	var entryID string
 	err = tx.QueryRowContext(ctx, `SELECT ENTRY.ENTRY_ID
           FROM ENTRY LEFT JOIN RECORD ON ENTRY.ENTRY_ID = RECORD.ENTRY_ID
-          WHERE ENTRY.MOOD_ID = ? AND ENTRY.ENTRY_ACCESS_CODE = ? AND (RECORD.ENTRY_ID IS NULL OR RECORD.RECORD_DATETIME <> ?)`, request.GetMoodId(), request.GetEntryAccessCode(), today).Scan(&entryID)
+          WHERE ENTRY.MOOD_ID = ? AND ENTRY.ENTRY_ID = ? AND (RECORD.ENTRY_ID IS NULL OR RECORD.RECORD_DATETIME <> ?)`, request.GetMoodId(), request.GetEntryId(), today).Scan(&entryID)
 	if err == sql.ErrNoRows {
-		return nil, errors.New("access-code or mood-id is invalid or expired")
+		return nil, errors.New("entry-id or mood-id is invalid or expired")
 	} else if err != nil {
 		return nil, err
 	}
@@ -83,11 +136,23 @@ func (m *moodServer) AddEntry(ctx context.Context, request *proto.AddEntryReques
 	return &proto.AddEntryResponse{}, nil
 }
 func (m *moodServer) GetMood(ctx context.Context, request *proto.GetMoodRequest) (*proto.GetMoodResponse, error) {
+	var signKey string
+	err := m.db.QueryRowContext(ctx, `SELECT MOOD.SIGN_KEY
+          FROM MOOD
+          WHERE MOOD.MOOD_ID = ?`, request.GetMoodId()).Scan(&signKey)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = checkSignedData(signKey, request.GetMoodId(), request.GetMoodSignature()); err != nil {
+		return nil, err
+	}
+
 	rows, err := m.db.QueryContext(ctx, `SELECT RECORD.RECORD, RECORD.COMMENT, RECORD.RECORD_DATETIME
           FROM RECORD JOIN ENTRY ON RECORD.ENTRY_ID = ENTRY.ENTRY_ID
           JOIN MOOD ON MOOD.MOOD_ID = ENTRY.MOOD_ID
-          WHERE MOOD.MOOD_ID = ? AND MOOD.MOOD_ACCESS_CODE = ?
-          ORDER BY RECORD.RECORD_DATETIME DESC`, request.GetMoodId(), request.GetMoodAccessCode())
+          WHERE MOOD.MOOD_ID = ?
+          ORDER BY RECORD.RECORD_DATETIME DESC`, request.GetMoodId())
 	if err != nil {
 		return nil, err
 	}
@@ -115,9 +180,9 @@ func (m *moodServer) GetMood(ctx context.Context, request *proto.GetMoodRequest)
           FROM ENTRY
           JOIN RECORD ON RECORD.ENTRY_ID = ENTRY.ENTRY_ID
           JOIN MOOD ON MOOD.MOOD_ID = ENTRY.MOOD_ID
-          WHERE MOOD.MOOD_ID = ? AND MOOD.MOOD_ACCESS_CODE = ? AND RECORD.RECORD_DATETIME > date('now', '-7 day')
+          WHERE MOOD.MOOD_ID = ? AND RECORD.RECORD_DATETIME > date('now', '-7 day')
           GROUP BY RECORD.RECORD, RECORD.RECORD_DATETIME
-          ORDER BY RECORD.RECORD, RECORD.RECORD_DATETIME`, request.GetMoodId(), request.GetMoodAccessCode())
+          ORDER BY RECORD.RECORD, RECORD.RECORD_DATETIME`, request.GetMoodId())
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +218,7 @@ func (m *moodServer) GetMood(ctx context.Context, request *proto.GetMoodRequest)
 
 	err = m.db.QueryRowContext(ctx, `SELECT MOOD.TITLE, MOOD.CONTENT
           FROM MOOD
-          WHERE MOOD.MOOD_ID = ? AND MOOD.MOOD_ACCESS_CODE = ?`, request.GetMoodId(), request.GetMoodAccessCode()).Scan(&title, &content)
+          WHERE MOOD.MOOD_ID = ?`, request.GetMoodId()).Scan(&title, &content)
 
 	if err != nil {
 		return nil, err
@@ -185,41 +250,61 @@ func (m *moodServer) CreateMood(ctx context.Context, request *proto.CreateMoodRe
 	}
 	defer tx.Rollback()
 
-	moodUUID := uuid.New()
+	randomKey := make([]byte, 256)
+	_, err = rand.Read(randomKey)
+	if err != nil {
+		return nil, err
+	}
+	randomKeyhex := hex.EncodeToString(randomKey)
+
+	moodUUID := ksuid.New()
+
+	moodSigner := hmac.New(sha256.New, randomKey)
+	_, err = moodSigner.Write([]byte(moodUUID.String()))
+	if err != nil {
+		return nil, err
+	}
+	moodSignature := hex.EncodeToString(moodSigner.Sum(nil))
 
 	// Create mood entry
-	moodStmt, err := tx.PrepareContext(ctx, "INSERT INTO MOOD (MOOD_ACCESS_CODE, TITLE, CONTENT) VALUES (?, ?, ?)")
+	moodStmt, err := tx.PrepareContext(ctx, "INSERT INTO MOOD (MOOD_ID, TITLE, CONTENT, SIGN_KEY) VALUES (?, ?, ?, ?)")
 	if err != nil {
 		return nil, err
 	}
 	defer moodStmt.Close()
 
-	r, err := moodStmt.ExecContext(ctx, moodUUID.String(), request.GetTitle(), request.GetContent())
-	if err != nil {
-		return nil, err
-	}
-
-	moodID, err := r.LastInsertId()
+	_, err = moodStmt.ExecContext(ctx, moodUUID.String(), request.GetTitle(), request.GetContent(), randomKeyhex)
 	if err != nil {
 		return nil, err
 	}
 
 	// Create entry entries
-	entryStmt, err := tx.PrepareContext(ctx, "INSERT INTO ENTRY (ENTRY_ACCESS_CODE, MOOD_ID) VALUES (?, ?)")
+	entryStmt, err := tx.PrepareContext(ctx, "INSERT INTO ENTRY (ENTRY_ID, MOOD_ID) VALUES (?, ?)")
 	if err != nil {
 		return nil, err
 	}
 	defer entryStmt.Close()
 
-	recordsAccessCodes := []string{}
+	recordsIds := []*proto.EntrySigned{}
 	var i uint32
 	for i = 0; i < request.GetNumberOfRecordsNeeded(); i++ {
-		entryUUID := uuid.New()
-		_, err = entryStmt.ExecContext(ctx, entryUUID.String(), moodID)
+		entryUUID := ksuid.New()
+		// Sign entry
+		signer := hmac.New(sha256.New, randomKey)
+		_, err = signer.Write([]byte(moodUUID.String() + entryUUID.String()))
 		if err != nil {
 			return nil, err
 		}
-		recordsAccessCodes = append(recordsAccessCodes, entryUUID.String())
+		entrySignature := hex.EncodeToString(signer.Sum(nil))
+		_, err = entryStmt.ExecContext(ctx, entryUUID.String(), moodUUID)
+		if err != nil {
+			return nil, err
+		}
+
+		recordsIds = append(recordsIds, &proto.EntrySigned{
+			EntryId:        entryUUID.String(),
+			EntrySignature: entrySignature,
+		})
 	}
 
 	mailStmt, err := tx.PrepareContext(ctx, "INSERT INTO MAIL (ENTRY_ID, EMAIL) VALUES (?, ?)")
@@ -228,16 +313,12 @@ func (m *moodServer) CreateMood(ctx context.Context, request *proto.CreateMoodRe
 	}
 	defer mailStmt.Close()
 	for _, email := range request.GetEmails() {
-		entryUUID := uuid.New()
-		e, err := entryStmt.ExecContext(ctx, entryUUID.String(), moodID)
+		entryUUID := ksuid.New()
+		_, err := entryStmt.ExecContext(ctx, entryUUID.String(), moodUUID)
 		if err != nil {
 			return nil, err
 		}
-		entryId, err := e.LastInsertId()
-		if err != nil {
-			return nil, err
-		}
-		_, err = mailStmt.ExecContext(ctx, entryId, email)
+		_, err = mailStmt.ExecContext(ctx, entryUUID, email)
 		if err != nil {
 			return nil, err
 		}
@@ -249,8 +330,8 @@ func (m *moodServer) CreateMood(ctx context.Context, request *proto.CreateMoodRe
 	}
 
 	return &proto.CreateMoodResponse{
-		MoodId:             moodID,
-		MoodAccessCode:     moodUUID.String(),
-		EntriesAccessCodes: recordsAccessCodes,
+		MoodId:        moodUUID.String(),
+		MoodSignature: moodSignature,
+		EntriesIds:    recordsIds,
 	}, nil
 }
