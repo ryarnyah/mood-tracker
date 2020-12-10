@@ -1,7 +1,7 @@
 <template>
-  <div class="home">
-    <img alt="Vue logo" src="../assets/logo.png">
-    <GetMood :moodId="$route.params.moodId" :moodAccessCode="$route.params.moodAccessCode" />
+    <div class="home">
+        <img alt="Vue logo" src="../assets/logo.png">
+        <GetMood :moodId="$route.params.moodId" :moodSignature="$route.params.moodSignature" />
   </div>
 </template>
 

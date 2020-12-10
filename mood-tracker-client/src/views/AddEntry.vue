@@ -1,7 +1,7 @@
 <template>
-  <div class="home">
-      <img alt="Vue logo" src="../assets/logo.png">
-      <AddEntry :moodId="$route.params.moodId" :entryAccessCode="$route.params.entryAccessCode" />
+    <div class="home">
+        <img alt="Vue logo" src="../assets/logo.png">
+        <AddEntry :moodId="$route.params.moodId" :entryId="$route.params.entryId" :entrySignature="$route.params.entrySignature" />
   </div>
 </template>
 

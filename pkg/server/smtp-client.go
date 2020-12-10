@@ -72,7 +72,7 @@ func (c *SmtpDbPoller) pollEmails() {
 	}
 	defer tx.Rollback()
 
-	rows, err := tx.Query(`SELECT ENTRY.ENTRY_ID, ENTRY.MOOD_ID, ENTRY.ENTRY_ACCESS_CODE, MAIL.EMAIL
+	rows, err := tx.Query(`SELECT ENTRY.ENTRY_ID, ENTRY.MOOD_ID, MAIL.EMAIL
            FROM MAIL JOIN ENTRY ON MAIL.ENTRY_ID = ENTRY.ENTRY_ID
            LIMIT 10`)
 	if err != nil {
@@ -81,11 +81,10 @@ func (c *SmtpDbPoller) pollEmails() {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var entryId int64
-		var moodId int64
-		var entryAccessCode string
+		var entryId string
+		var moodId string
 		var email string
-		err = rows.Scan(&entryId, &moodId, &entryAccessCode, &email)
+		err = rows.Scan(&entryId, &moodId, &email)
 		if err != nil {
 			glog.Error(err)
 			return
@@ -105,7 +104,7 @@ func (c *SmtpDbPoller) pollEmails() {
 						"To: %s\r\n"+
 						"Subject: Your daily mood personal URL!\r\n"+
 						"\r\n"+
-						"Get Access to your daily mood URL here %s/entry/%d/%s.\r\n", c.senderEmail, email, c.externalURL, moodId, entryAccessCode),
+						"Get Access to your daily mood URL here %s/entry/%s.\r\n", c.senderEmail, email, c.externalURL, moodId),
 			)
 
 			err := smtp.SendMail(fmt.Sprintf("%s:%d", c.host, c.port), auth, c.senderEmail, to, msg)

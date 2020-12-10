@@ -46,16 +46,17 @@ export default {
     name: 'AddEntry',
     props: [
         'moodId',
-        'entryAccessCode'
+        'entryId',
+        'entrySignature'
     ],
     data: () => ({
-      title: null,
-      content: null,
-      comment: null,
-      sending: false,
-      entrySaved: false,
-      showError: false,
-      errorMessage: null
+        title: null,
+        content: null,
+        comment: null,
+        sending: false,
+        entrySaved: false,
+        showError: false,
+        errorMessage: null
     }),
     created () {
         this.getMood();
@@ -72,11 +73,12 @@ export default {
       },
       getMood () {
         let request = new GetMoodFromEntryRequest();
-        request.setMoodId(this.moodId);
-        request.setEntryAccessCode(this.entryAccessCode);
+          request.setMoodId(this.moodId);
+          request.setEntryId(this.entryId);
+          request.setEntrySignature(this.entrySignature);
 
-        let v = this;
-        grpc.unary(Mood.GetMoodFromEntry, {
+          let v = this;
+          grpc.unary(Mood.GetMoodFromEntry, {
             request: request,
             host: '/grpc',
             onEnd: function(res) {
@@ -99,7 +101,8 @@ export default {
           entry.setComment(this.comment);
 
           request.setMoodId(this.moodId);
-          request.setEntryAccessCode(this.entryAccessCode);
+          request.setEntryId(this.entryId);
+          request.setEntrySignature(this.entrySignature);
           request.setEntry(entry);
 
           let v = this;

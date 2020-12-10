@@ -13,12 +13,12 @@ const routes = [
         component: Home
     },
     {
-        path: '/mood/:moodId/:moodAccessCode',
+        path: '/mood/:moodId/:moodSignature',
         name: 'Mood',
         component: Mood
     },
     {
-        path: '/entry/:moodId/:entryAccessCode',
+        path: '/entry/:moodId/:entryId/:entrySignature',
         name: 'Entry',
         component: Entry
     },
