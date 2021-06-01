@@ -34,7 +34,7 @@ all: clean build fmt lint test vet ## Runs a clean, build, fmt, lint, test, stat
 .PHONY: build
 build: $(BINARIES) ## Builds a dynamic executable or package
 
-$(BINARIES): VERSION.txt protoc yarn-build statik
+$(BINARIES): VERSION.txt protoc npm-build statik
 	@echo "+ $@"
 	GO111MODULE=on CGO_ENABLED=1 go build -tags "$(BUILDTAGS)" $(call GO_LDFLAGS,$@) -o $@ $(BASE_BINARIES)/$@
 
@@ -90,7 +90,7 @@ sha256sum $(BUILDDIR)/$(1)/$(2)/$(3) > $(BUILDDIR)/$(1)/$(2)/$(3).sha256;
 endef
 
 .PHONY: cross
-cross: VERSION.txt protoc yarn-build statik ## Builds the cross-compiled binaries, creating a clean directory structure (eg. GOOS/GOARCH/binary)
+cross: VERSION.txt protoc npm-build statik ## Builds the cross-compiled binaries, creating a clean directory structure (eg. GOOS/GOARCH/binary)
 	@echo "+ $@"
 	$(foreach BINARY,$(BINARIES), $(foreach GOOSARCH,$(GOOSARCHES), $(call buildpretty,$(subst /,,$(dir $(GOOSARCH))),$(notdir $(GOOSARCH)),$(BINARY))))
 
@@ -104,15 +104,16 @@ sha256sum $(BUILDDIR)/$(3)-$(1)-$(2) > $(BUILDDIR)/$(3)-$(1)-$(2).sha256;
 endef
 
 .PHONY: release
-release: VERSION.txt protoc yarn-build statik ## Builds the cross-compiled binaries, naming them in such a way for release (eg. binary-GOOS-GOARCH)
+release: VERSION.txt protoc npm-build statik ## Builds the cross-compiled binaries, naming them in such a way for release (eg. binary-GOOS-GOARCH)
 	@echo "+ $@"
 	$(foreach BINARY,$(BINARIES), $(foreach GOOSARCH,$(GOOSARCHES), $(call buildrelease,$(subst /,,$(dir $(GOOSARCH))),$(notdir $(GOOSARCH)),$(BINARY))))
 
 .PHONY: protoc
-protoc: yarn
+protoc: npm
 	protoc -I proto/ \
 	--proto_path=${GOPATH}/src \
-	--go_out=plugins=grpc:proto \
+	--go-grpc_out=proto \
+	--go_out=proto \
 	--plugin=protoc-gen-ts=./mood-tracker-client/node_modules/.bin/protoc-gen-ts \
 	--ts_out=service=grpc-web:mood-tracker-client/src/proto \
 	--js_out=import_style=commonjs,binary:mood-tracker-client/src/proto \
@@ -127,17 +128,17 @@ protoc: yarn
 	mv ./mood-tracker-client/src/proto/mood_pb.js.tmp ./mood-tracker-client/src/proto/mood_pb.js
 
 
-.PHONE: install-yarn
-install-yarn:
-	npm install -g yarn
+.PHONY: npm
+npm:
+	npm install --prefix ./mood-tracker-client
 
-.PHONY: yarn
-yarn: install-yarn
-	yarn --cwd ./mood-tracker-client install
+.PHONY: npm-build
+npm-build: npm
+	npm run build --prefix ./mood-tracker-client
 
-.PHONY: yarn-build
-yarn-build: yarn
-	yarn --cwd ./mood-tracker-client build
+.PHONY: npm-audit-fix
+npm-audit-fix: npm
+	npm audit fix --prefix ./mood-tracker-client
 
 .PHONY: statik
 statik:
@@ -198,11 +199,12 @@ docker push $(BASE_REPOSITORY)/$(3)-$(1)-$(2):$(VERSION);
 endef
 
 .PHONY: dev-dependencies
-dev-dependencies: install-yarn ## Install all dev dependencies
+dev-dependencies: ## Install all dev dependencies
 	@GO111MODULE=off go get -v -u github.com/jessfraz/junk/sembump
 	@GO111MODULE=off go get -v -u honnef.co/go/tools/cmd/staticcheck
 	@GO111MODULE=off go get -v -u golang.org/x/lint/golint
-	@GO111MODULE=off go get -v -u github.com/golang/protobuf/protoc-gen-go
+	go get -v -u google.golang.org/protobuf/cmd/protoc-gen-go@v1.26
+	go get -v -u google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1
 	@GO111MODULE=off go get -v -u github.com/mwitkow/go-proto-validators
 	@GO111MODULE=off go get -v -u github.com/rakyll/statik
 	@GO111MODULE=off go get -v -u github.com/mwitkow/go-proto-validators/protoc-gen-govalidators

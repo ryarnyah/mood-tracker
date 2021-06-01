@@ -12,6 +12,8 @@ import (
 )
 
 type moodServer struct {
+	*proto.UnimplementedMoodServer
+
 	db *sql.DB
 }
 

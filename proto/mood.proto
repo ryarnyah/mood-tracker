@@ -1,5 +1,5 @@
 syntax = "proto3";
-option go_package = ".;mood";
+option go_package = "/;mood";
 import "github.com/mwitkow/go-proto-validators/validator.proto";
 import "google/protobuf/timestamp.proto";
 
