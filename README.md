@@ -1,4 +1,4 @@
-# Mood-Tracker [![Build Status](https://travis-ci.org/ryarnyah/mood-tracker.svg?branch=master)](https://travis-ci.org/ryarnyah/mood-tracker) #
+# Mood-Tracker [![Build Status](https://github.com/ryarnyah/mood-tracker/actions/workflows/build.yml/badge.svg)](https://github.com/ryarnyah/mood-tracker/) #
 
 Some web-grpc mood tracker to track your team mood anonymously :D
 

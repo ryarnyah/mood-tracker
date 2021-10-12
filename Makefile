@@ -203,8 +203,8 @@ dev-dependencies: ## Install all dev dependencies
 	@GO111MODULE=off go get -v -u github.com/jessfraz/junk/sembump
 	@GO111MODULE=off go get -v -u honnef.co/go/tools/cmd/staticcheck
 	@GO111MODULE=off go get -v -u golang.org/x/lint/golint
-	go get -v -u google.golang.org/protobuf/cmd/protoc-gen-go@v1.26
-	go get -v -u google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1
+	go install -v google.golang.org/protobuf/cmd/protoc-gen-go@v1.27.1
+	go install -v google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1.0
 	@GO111MODULE=off go get -v -u github.com/mwitkow/go-proto-validators
 	@GO111MODULE=off go get -v -u github.com/rakyll/statik
 	@GO111MODULE=off go get -v -u github.com/mwitkow/go-proto-validators/protoc-gen-govalidators
