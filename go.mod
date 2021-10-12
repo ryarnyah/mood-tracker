@@ -31,6 +31,7 @@ require (
 )
 
 require (
+	github.com/gin-gonic/gin v1.7.4 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	golang.org/x/text v0.3.7 // indirect
