@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
 	github.com/golang-migrate/migrate/v4 v4.15.1
-	github.com/golang/glog v1.0.0
+	github.com/golang/glog v1.1.0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
