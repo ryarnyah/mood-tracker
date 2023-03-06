@@ -21,8 +21,8 @@ require (
 	github.com/rakyll/statik v0.1.7
 	github.com/rs/cors v1.8.0 // indirect
 	github.com/sirupsen/logrus v1.8.1
-	golang.org/x/net v0.0.0-20211013171255-e13a2654a71e // indirect
-	golang.org/x/sys v0.0.0-20211013075003-97ac67df715c // indirect
+	golang.org/x/net v0.7.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
 	google.golang.org/grpc v1.45.0
 	google.golang.org/protobuf v1.28.0
@@ -34,6 +34,6 @@ require (
 	github.com/gin-gonic/gin v1.7.4 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/text v0.7.0 // indirect
 	google.golang.org/genproto v0.0.0-20211013025323-ce878158c4d4 // indirect
 )
